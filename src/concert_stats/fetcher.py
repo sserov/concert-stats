@@ -4,6 +4,11 @@ import hashlib
 import time
 
 import httpx
+import truststore
+
+# meloman.ru serves an incomplete TLS chain; the macOS system trust store
+# resolves it (OpenSSL/certifi alone fails CERTIFICATE_VERIFY_FAILED).
+truststore.inject_into_ssl()
 
 USER_AGENT = "concert-stats/0.1 (personal research)"
 
