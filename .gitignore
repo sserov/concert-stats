@@ -1,0 +1,8 @@
+data/raw/
+data/meloman/events.jsonl
+data/mosconsv/events.jsonl
+*.log
+nohup.out
+.venv
+__pycache__/
+dist/
