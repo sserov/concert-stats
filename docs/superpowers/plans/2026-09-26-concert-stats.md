@@ -1,6 +1,6 @@
 # Concert Stats Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Собрать 10 лет данных (2016–2026) о концертах Московской филармонии (meloman.ru) и консерватории (mosconsv.ru), извлечь композиторов и сгенерировать статичный HTML-дашборд трендов.
 
@@ -41,7 +41,7 @@
 - Consumes: ничего.
 - Produces: `fetch(url: str, cache_dir: Path, client: httpx.Client | None = None, retries: int = 3, timeout: float = 30.0) -> str | None` — возвращает тело страницы (UTF-8 decode с `errors="replace"`) или `None` после исчерпания ретраев; кэширует по `sha1(url)` в `cache_dir` (файл `<sha1>.body`); сетевые ошибки и 5xx ретраятся с backoff 1/2/4 с; 4xx не ретраится, возвращает `None`; ошибки дописываются в `cache_dir/_errors.log` строкой `"{url}\t{reason}"`.
 
-- [ ] **Step 1: Инициализация проекта**
+- [x] **Step 1: Инициализация проекта**
 
 ```bash
 cd /Users/sserov/Documents/PROJECTS/concert-stats
@@ -53,7 +53,7 @@ uv add --dev pytest==8.4.2 ruff==0.14.9 ty==0.0.1a7
 
 (перед `uv add` проверить актуальные версии: `uv pip index versions httpx` и т.д.; зафиксировать актуальную стабильную)
 
-- [ ] **Step 2: pyproject.toml**
+- [x] **Step 2: pyproject.toml**
 
 ```toml
 [project]
@@ -92,7 +92,7 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 testpaths = ["tests"]
 ```
 
-- [ ] **Step 3: Пишем failing test**
+- [x] **Step 3: Пишем failing test**
 
 `tests/test_fetcher.py`:
 
@@ -167,12 +167,12 @@ def test_fetch_decodes_invalid_utf8(tmp_path):
     assert "café" in body
 ```
 
-- [ ] **Step 4: Запуск — убедиться, что падает**
+- [x] **Step 4: Запуск — убедиться, что падает**
 
 Run: `uv run pytest tests/test_fetcher.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'concert_stats.fetcher'`
 
-- [ ] **Step 5: Реализация**
+- [x] **Step 5: Реализация**
 
 `src/concert_stats/fetcher.py`:
 
@@ -238,17 +238,17 @@ def _log_error(cache_dir, url: str, reason: str) -> None:
         fh.write(f"{url}\t{reason}\n")
 ```
 
-- [ ] **Step 6: Тесты зелёные**
+- [x] **Step 6: Тесты зелёные**
 
 Run: `uv run pytest tests/test_fetcher.py -v`
 Expected: 5 PASS
 
-- [ ] **Step 7: Линтеры чисты**
+- [x] **Step 7: Линтеры чисты**
 
 Run: `uv run ruff check src tests && uv run ruff format --check src tests`
 Expected: no findings (при необходимости `ruff format`).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add pyproject.toml uv.lock src tests
@@ -272,7 +272,7 @@ git commit -m "Add project scaffold and caching fetcher"
   - `unknown_surnames(text: str, freq: dict[str, int] | None = None) -> set[str]` — эвристика «И. О. Фамилия»: фамилии, найденные паттерном инициалов и НЕ присутствующие в словаре.
   - `by_cid() -> dict[str, Composer]`.
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `tests/test_composers.py`:
 
@@ -335,12 +335,12 @@ def test_ambiguous_surname_maps_to_generic():
     assert match_composers("Р. Штраус, Альпийская симфония") == {"strauss_richard"}
 ```
 
-- [ ] **Step 2: Запуск — падает**
+- [x] **Step 2: Запуск — падает**
 
 Run: `uv run pytest tests/test_composers.py -v`
 Expected: FAIL — module not found
 
-- [ ] **Step 3: Реализация — словарь (сид)**
+- [x] **Step 3: Реализация — словарь (сид)**
 
 `src/concert_stats/composers.py` — структура данных и сида (сокращённый список для читаемости плана; исполнитель добавляет все строки из блока `SEED` ниже без изменений):
 
@@ -524,12 +524,12 @@ def test_cids_unique():
     assert len(cids) == len(set(cids))
 ```
 
-- [ ] **Step 4: Тесты зелёные**
+- [x] **Step 4: Тесты зелёные**
 
 Run: `uv run pytest tests/test_composers.py -v`
 Expected: PASS (все, включая `test_cids_unique`, `test_ambiguous_surname_maps_to_generic`)
 
-- [ ] **Step 5: Линтеры + Commit**
+- [x] **Step 5: Линтеры + Commit**
 
 Run: `uv run ruff check src tests && uv run ruff format --check src tests`
 
@@ -567,14 +567,14 @@ git commit -m "Add composer dictionary and matching heuristics"
     ```
   - CLI: `uv run python -m concert_stats.scrape_mosconsv --start 2016-01-01 --end 2026-09-26` — итерация дней → `/api/concert/forday?date=` → страницы `/ru/concert/<id>`; вывод `data/mosconsv/events.jsonl`; кэш `data/raw/mosconsv/`; в конце печатает отчёт `ok/failed/no-program`.
 
-- [ ] **Step 1: Сохранить фикстуру (реальная страница)**
+- [x] **Step 1: Сохранить фикстуру (реальная страница)**
 
 ```bash
 mkdir -p tests/fixtures
 curl -sk 'https://www.mosconsv.ru/ru/concert/175432' -o tests/fixtures/mosconsv_concert.html
 ```
 
-- [ ] **Step 2: Failing test**
+- [x] **Step 2: Failing test**
 
 `tests/test_scrape_mosconsv.py`:
 
@@ -612,12 +612,12 @@ def test_parse_garbage_page_with_invalid_bytes():
     assert "Моцарт" in " ".join(rec["structured_composers"])
 ```
 
-- [ ] **Step 3: Падает**
+- [x] **Step 3: Падает**
 
 Run: `uv run pytest tests/test_scrape_mosconsv.py -v`
 Expected: FAIL — module not found
 
-- [ ] **Step 4: Реализация**
+- [x] **Step 4: Реализация**
 
 `src/concert_stats/scrape_mosconsv.py`:
 
@@ -733,12 +733,12 @@ if __name__ == "__main__":
 
 Примечание: точные селекторы зала на странице подбери по фикстуре (в probe `hall` приходил из API `ev["hall"]` — резервная заполнка из API уже в коде; это основной путь, HTML-поиск — запасной).
 
-- [ ] **Step 5: Тесты зелёные**
+- [x] **Step 5: Тесты зелёные**
 
 Run: `uv run pytest tests/test_scrape_mosconsv.py -v`
 Expected: PASS. Если селекторы не совпали с фикстурой — поправить по реальной разметке (блок: `<h2>Программа</h2>` → `div.prose`, композиторы в `<strong>`).
 
-- [ ] **Step 6: Smoke-прогон на маленьком интервале**
+- [x] **Step 6: Smoke-прогон на маленьком интервале**
 
 ```bash
 uv run python -m concert_stats.scrape_mosconsv --start 2022-03-14 --end 2022-03-16
@@ -748,7 +748,7 @@ head -1 data/mosconsv/events.jsonl | python3 -m json.tool | head -20
 
 Expected: 3 дня, ≥5 событий, записи с `program_text` и `structured_composers`. После проверки стереть `data/mosconsv/events.jsonl` (полный прогон будет в Task 8): `trash data/mosconsv/events.jsonl`.
 
-- [ ] **Step 7: Линтеры + Commit**
+- [x] **Step 7: Линтеры + Commit**
 
 ```bash
 uv run ruff check src tests && uv run ruff format --check src tests
@@ -772,7 +772,7 @@ git commit -m "Add mosconsv scraper with day API iteration"
   - `extract_event_links(html: str) -> set[str]` — URL событий из архивной страницы-листинга афиши (href с `/concert/<slug>` или `/afisha/<slug>`).
   - CLI: `uv run python -m concert_stats.discover_meloman --from 2016 --to 2026` → пишет `data/meloman/urls.jsonl` (строки `{"url", "snapshot_ts" | null}`). Источники: (а) CDX по `meloman.ru/concert/*`; (б) CDX по листингам `meloman.ru/afisha/` и `meloman.ru/concert/` (`collapse=timestamp:6`, один снапшот в месяц), fetch каждого листинга через wayback (`web.archive.org/web/<ts>id_/<url>`) → `extract_event_links`.
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `tests/test_discover_meloman.py`:
 
@@ -814,9 +814,9 @@ def test_extract_event_links_from_listing():
     }
 ```
 
-- [ ] **Step 2: Падает** — `uv run pytest tests/test_discover_meloman.py -v` → module not found.
+- [x] **Step 2: Падает** — `uv run pytest tests/test_discover_meloman.py -v` → module not found.
 
-- [ ] **Step 3: Реализация**
+- [x] **Step 3: Реализация**
 
 `src/concert_stats/discover_meloman.py`:
 
@@ -919,9 +919,9 @@ if __name__ == "__main__":
 
 (Два CDX-источника: листинги афиш дают URL, которых нет в индексе detail-страниц. `parse_cdx` для листингов пропускает сами листинги — фильтр `endswith`.)
 
-- [ ] **Step 4: Тесты зелёные** — `uv run pytest tests/test_discover_meloman.py -v`
+- [x] **Step 4: Тесты зелёные** — `uv run pytest tests/test_discover_meloman.py -v`
 
-- [ ] **Step 5: Линтеры + Commit**
+- [x] **Step 5: Линтеры + Commit**
 
 ```bash
 uv run ruff check src tests && uv run ruff format --check src tests
@@ -944,14 +944,14 @@ git commit -m "Add meloman URL discovery via Wayback CDX and listings"
   - `parse_meloman_concert(html: str, url: str, snapshot_ts: str | None) -> dict` — та же схема записи, что mosconsv (Task 3), но `source="meloman"`, `id="meloman:<sha1(url)[:12]>"`. Дата: слаг `YYYY-MM-DD` в URL → точная; иначе первый `dd.mm.yyyy` в тексте страницы → точная; иначе (только при наличии `snapshot_ts`) дата снапшота → `date_approximate=True`. Композиторы: тексты `<b class="uppercase">` внутри `div.editor--preview` после комментария `комозиторы программа` → `structured_composers`.
   - CLI: `uv run python -m concert_stats.scrape_meloman` — читает `urls.jsonl`, для каждого URL live-fetch (кэш отдельный), при `None` — wayback `web.archive.org/web/<ts>id_/<url>`; пишет `data/meloman/events.jsonl`; отчёт `ok/failed/approximate_dates`.
 
-- [ ] **Step 1: Фикстуры (реальные страницы)**
+- [x] **Step 1: Фикстуры (реальные страницы)**
 
 ```bash
 curl -sk 'https://meloman.ru/concert/kzch-2026-09-27/' -o tests/fixtures/meloman_current.html
 curl -sk 'https://meloman.ru/concert/1585-let-rodion-shedrin-158551019346/' -o tests/fixtures/meloman_2020.html
 ```
 
-- [ ] **Step 2: Failing test**
+- [x] **Step 2: Failing test**
 
 `tests/test_scrape_meloman.py`:
 
@@ -1006,9 +1006,9 @@ def test_parse_invalid_bytes():
     assert rec["structured_composers"] == ["Щедрин"]
 ```
 
-- [ ] **Step 3: Падает** — module not found.
+- [x] **Step 3: Падает** — module not found.
 
-- [ ] **Step 4: Реализация**
+- [x] **Step 4: Реализация**
 
 `src/concert_stats/scrape_meloman.py`:
 
@@ -1126,11 +1126,11 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 5: Тесты зелёные** — `uv run pytest tests/test_scrape_meloman.py -v`. Селекторы сверить с фикстурами; если `editor--preview`-блоков несколько — условие выбора блока уточнить по наличию `<b class="uppercase">`.
+- [x] **Step 5: Тесты зелёные** — `uv run pytest tests/test_scrape_meloman.py -v`. Селекторы сверить с фикстурами; если `editor--preview`-блоков несколько — условие выбора блока уточнить по наличию `<b class="uppercase">`.
 
-- [ ] **Step 6: Smoke** — после Task 4 прогнать discovery на 2024, затем scrape, проверить записи. (Полный discovery — Task 8.)
+- [x] **Step 6: Smoke** — после Task 4 прогнать discovery на 2024, затем scrape, проверить записи. (Полный discovery — Task 8.)
 
-- [ ] **Step 7: Линтеры + Commit**
+- [x] **Step 7: Линтеры + Commit**
 
 ```bash
 uv run ruff check src tests && uv run ruff format --check src tests
@@ -1161,7 +1161,7 @@ git commit -m "Add meloman scraper with wayback fallback"
     ```
   - CLI: `uv run python -m concert_stats.build_dataset` → `data/dataset.json`; печатает quality-отчёт и топ-30 `unknown_surnames` → `data/review_unknown.txt`.
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `tests/test_build_dataset.py`:
 
@@ -1232,9 +1232,9 @@ def test_quality_reported():
     assert ds["quality"]["without_composers_pct"] == 50.0
 ```
 
-- [ ] **Step 2: Падает** — module not found.
+- [x] **Step 2: Падает** — module not found.
 
-- [ ] **Step 3: Реализация**
+- [x] **Step 3: Реализация**
 
 `src/concert_stats/build_dataset.py`:
 
@@ -1332,9 +1332,9 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 4: Тесты зелёные** — `uv run pytest tests/test_build_dataset.py -v`
+- [x] **Step 4: Тесты зелёные** — `uv run pytest tests/test_build_dataset.py -v`
 
-- [ ] **Step 5: Линтеры + Commit**
+- [x] **Step 5: Линтеры + Commit**
 
 ```bash
 uv run ruff check src tests && uv run ruff format --check src tests
@@ -1362,7 +1362,7 @@ git commit -m "Add dataset builder with seasons and dedupe"
 4. Таблица топа с поиском; колонки: имя, концерты, сезоны, последний сезон.
 5. Coverage: bar числа событий по годам с разбивкой по источникам + подпись о провалах (ковид 2020–21, слабое покрытие филармонии 2016–18).
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `tests/test_build_dashboard.py`:
 
@@ -1396,9 +1396,9 @@ def test_render_embeds_dataset(tmp_path):
     assert "Бетховен" in html or "beethoven" in html
 ```
 
-- [ ] **Step 2: Падает** — module not found.
+- [x] **Step 2: Падает** — module not found.
 
-- [ ] **Step 3: Шаблон**
+- [x] **Step 3: Шаблон**
 
 `src/concert_stats/dashboard_template.html` — полный файл (исполнитель переносит как есть):
 
@@ -1584,7 +1584,7 @@ window.DATASET = __DATA__;
 </html>
 ```
 
-- [ ] **Step 4: Реализация генератора**
+- [x] **Step 4: Реализация генератора**
 
 `src/concert_stats/build_dashboard.py`:
 
@@ -1622,9 +1622,9 @@ if __name__ == "__main__":
 "src/concert_stats/dashboard_template.html" = "concert_stats/dashboard_template.html"
 ```
 
-- [ ] **Step 5: Тесты зелёные** — `uv run pytest tests/test_build_dashboard.py -v`
+- [x] **Step 5: Тесты зелёные** — `uv run pytest tests/test_build_dashboard.py -v`
 
-- [ ] **Step 6: Ручная проверка на синтетике**
+- [x] **Step 6: Ручная проверка на синтетике**
 
 ```bash
 uv run python -c "
@@ -1637,7 +1637,7 @@ open /tmp/dashboard_test.html
 
 (создать `tests/dataset_sample.json` руками: 3–5 концертов, 2 сезона, 3 композитора). Проверить: бары, heatmap, тренды, coverage рендерятся; фильтры работают; клик по бару переключает тренд.
 
-- [ ] **Step 7: Линтеры + Commit**
+- [x] **Step 7: Линтеры + Commit**
 
 ```bash
 uv run ruff check src tests && uv run ruff format --check src tests
@@ -1657,7 +1657,7 @@ git commit -m "Add static dashboard generator with Plotly views"
 - Consumes: всё (Tasks 1–7).
 - Produces: заполненные `data/`, `data/dataset.json`, `dashboard.html`, README.
 
-- [ ] **Step 1: Полный скрапинг (часы; фоновые запуски)**
+- [x] **Step 1: Полный скрапинг (часы; фоновые запуски)**
 
 ```bash
 nohup uv run python -m concert_stats.scrape_mosconsv --start 2016-01-01 --end 2026-09-26 > data/mosconsv_run.log 2>&1 &
@@ -1667,7 +1667,7 @@ uv run python -m concert_stats.scrape_meloman > data/meloman_run.log 2>&1
 
 Между этапами проверять отчёты в логах; повторный запуск продолжает с кэша.
 
-- [ ] **Step 2: Датасет + первая итерация словаря**
+- [x] **Step 2: Датасет + первая итерация словаря**
 
 ```bash
 uv run python -m concert_stats.build_dataset
@@ -1676,7 +1676,7 @@ head -40 data/review_unknown.txt
 
 Частые неизвестные фамилии (порог: ≥10 вхождений) добавить в `COMPOSERS` по формату `_c(...)`. Повторить `build_dataset`, цель `without_composers_pct < 10`. Может потребоваться 2–3 итерации.
 
-- [ ] **Step 3: Дашборд + ручная проверка**
+- [x] **Step 3: Дашборд + ручная проверка**
 
 ```bash
 uv run python -m concert_stats.build_dashboard
@@ -1685,7 +1685,7 @@ open dashboard.html
 
 Проверить вживую: (а) Шостакович: 50 лет со дня смерти было в 2025 — всплеск в сезоне 2024/25 или 2025/26; (б) покрытие по годам показывает провалы честно; (в) фильтры залов работают; (г) heatmap читается.
 
-- [ ] **Step 4: README**
+- [x] **Step 4: README**
 
 `README.md`:
 
@@ -1719,14 +1719,14 @@ open dashboard.html
 - `dashboard.html` — дашборд (самодостаточный файл).
 ```
 
-- [ ] **Step 5: Финальные проверки**
+- [x] **Step 5: Финальные проверки**
 
 ```bash
 uv run pytest -q
 uv run ruff check src tests && uv run ruff format --check src tests
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add README.md src/concert_stats/composers.py data/dataset.json dashboard.html

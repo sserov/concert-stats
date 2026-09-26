@@ -1,5 +1,7 @@
 data/raw/
 data/meloman/events.jsonl
+data/meloman/urls.jsonl
+data/meloman/urls_smoke.jsonl
 data/mosconsv/events.jsonl
 *.log
 nohup.out
