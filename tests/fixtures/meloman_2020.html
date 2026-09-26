@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <base href="/"/>
+    <title>Домашний сезон. Трансляции из Концертного зала Чайковского. Российский национальный оркестр, Михаил Плетнёв, Родион Щедрин</title>
+    <meta charset="utf-8">
+
+    <meta property="og:title" content="Домашний сезон. Трансляции из Концертного зала Чайковского. Российский национальный оркестр, Михаил Плетнёв, Родион Щедрин" />
+    <meta property="og:site_name" content="Московская филармония">
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://meloman.ru" />
+    <meta property="og:image" content="https://meloman.ru/!upload/t_concert/76fc8017-9f19-a842-ff67-a1d974102f59.jpg" />
+    <meta property="og:description" content="Домашний сезон. Трансляции из Концертного зала Чайковского. Российский национальный оркестр, Михаил Плетнёв, Родион Щедрин" />
+    <meta property="og:locale" content="ru_RU" />
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/project/web/assets/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/project/web/assets/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/project/web/assets/favicons/favicon-16x16.png">
+    <link rel="manifest" crossorigin="use-credentials" href="/project/web/assets/favicons/site.webmanifest">
+    <link rel="mask-icon" href="/project/web/assets/favicons/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="/project/web/css/1790273021_5bbd248c663e9c524cb0972757dd696e_main.min.css">
+    <link href="/core/style/default.css" rel="stylesheet">
+    <style>
+        * {font-variant-ligatures: none;}
+        .article-ticket:hover {}
+        .iframe-container {width: 100%;height: 0;padding-bottom: 37%;position: relative;}
+        .iframe-container iframe {position: absolute;top: 0;left: 0;width: 100%;height: 100%;border: none;}
+
+        /** components */
+        .tooltip {display: none;position: absolute; color: black!important; top: 0; width:100%; left: 50%; transform: translateY(-110%) translateX(-50%); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23); padding: 6px; }
+        [data-tooltip]:hover .tooltip {display: block;}
+        [data-favorite], [data-notice] {display: none;}
+
+        /** uikit */
+        ._opacity {opacity: 0.5; pointer-events: none;}
+        .d-n {display:none}
+        ._relative {position: relative}
+        .text-upper {text-transform: uppercase}
+        label:has(._opacity) {cursor: default !important;}
+
+        /** layout :: translation block */
+        .article-live:first-child .button-topbar:first-child,
+            .article-live:last-child  .button-topbar:last-child{opacity: 0; pointer-events: none}
+
+        .navigation-slider.amaranth .navigation-slider__line {
+            background-color: var(--amaranth);
+        }
+        .navigation-slider.amaranth .navigation-slider__icon {
+            fill: var(--amaranth);
+        }
+
+        ._opacity .article-season-ticket__columns {pointer-events: all;}
+        ._disabled {pointer-events: none;}
+
+        .map-frame {filter: grayscale(100%);}
+        [data-filter-active] {font-weight: lighter}
+        ._shadow { box-shadow: 0 8px 31px 0 rgba(32, 35, 53, 0.08); }
+        .animated-notification {
+            position: fixed;
+            width: 250px;
+            min-height: 60px;
+            background-color: var(--red);
+            opacity: 0;
+            transition: all 0.5s ease-in-out;
+            z-index: 1000;
+            pointer-events: none;
+            border-radius: 0px;
+            right: 20px;
+            top: -100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 15px;
+            color: #fff;
+        }
+
+        .d-flex {display: -webkit-box;display: -ms-flexbox;display: flex;}
+        .align-items-top {-webkit-box-align: start;-webkit-align-items: flex-start;-ms-flex-align: start;align-items: flex-start;}
+        .align-items-bottom {-webkit-box-align: end;-webkit-align-items: flex-end;-ms-flex-align: end;align-items: flex-end;}
+        .align-items-center {-webkit-box-align: center;-webkit-align-items: center;-ms-flex-align: center;align-items: center;}
+        .justify-content-between {-webkit-box-pack: justify;-webkit-justify-content: space-between;-ms-flex-pack: justify;justify-content: space-between;}
+        .justify-content-around {-webkit-justify-content: space-around;-ms-flex-pack: distribute;justify-content: space-around;}
+        .justify-content-center {-webkit-box-pack: center;-webkit-justify-content: center;-ms-flex-pack: center;justify-content: center;}
+        .justify-content-start {-webkit-box-pack: flex-start;-webkit-justify-content: flex-start;-ms-flex-pack: flex-start;justify-content: flex-start;}
+        .justify-content-end {-webkit-box-pack: flex-end;-webkit-justify-content: flex-end;-ms-flex-pack: flex-end;justify-content: flex-end;}
+        .fg1 { gap: 0.5em }
+        .fg2 { gap: 1em }
+
+        ._svg100 svg { height: 1em; flex-shrink: 0; max-width: none; }
+        ._svg120 svg { height: 1.2em; flex-shrink: 0; max-width: none; }
+        ._svg150 svg { height: 1.5em; flex-shrink: 0; max-width: none; }
+        ._linecrop3 {display: -webkit-box;-webkit-line-clamp: 3;-webkit-box-orient: vertical;overflow: hidden;text-overflow: ellipsis;line-height: 1.4;}
+        form.success .form-subscribe__result { display:unset; visibility:unset; }
+        form.success .form-subscribe__main { display:none;  }
+    </style>
+
+    <!-- метрики -->
+    <!-- VK Code -->
+<script type="text/javascript">!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://vk.ru/js/api/openapi.js?160",t.onload=function(){VK.Retargeting.Init("VK-RTRG-345408-8vP8u"),VK.Retargeting.Hit()},document.head.appendChild(t)}();</script>
+<!-- End VK Code -->
+</head>
+<body class="body" id="body" data-body>
+<div class="page">
+    <script>
+        window.lang = '';
+    </script>
+
+    <!-- настройка версии для слабовидящих -->
+    <section class="section" data-disability="block" hidden="hidden">
+    <div class="container container--fluid-tab">
+        <div class="disability">
+            <div class="disability__content">
+                <div class="grid grid--align-center">
+                    <div class="grid__col grid__col--6 grid__col-lap--4 grid__col-tab--6 grid__col-mob--4">
+                        <button class="button" data-disability="button-simple">
+                            Упрощенный режим
+                        </button>
+                    </div>
+                    <div class="grid__col grid__col--6 grid__col-lap--4 grid__col-tab--6 grid__col-mob--4">
+                        <button class="button" data-disability="button-image">
+                            Отключить изображения
+                        </button>
+                    </div>
+                    <div class="grid__col grid__col--4 grid__col-lap--4 grid__col-tab--6 grid__col-mob--4">
+
+                    </div>
+                    <div class="grid__col grid__col--8 grid__col-lap--4 grid__col-tab--6 grid__col-mob--4">
+                        <button class="button-link" data-disability="button-reset">
+                            Параметры по умолчанию
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="disability__controls">
+                <button class="button-icon" aria-label="Закрыть инструменты для слабовидящих" data-inclusive-button>
+                    <svg class="button-icon__icon">
+                        <use href="/project/web/assets/sprite/sprite-svg.svg#icon-close"></use>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    function initDisability() {
+        const noImage = localStorage.getItem('enabledNoImageMode');
+        const isSimple = localStorage.getItem('enabledSimpleMode');
+        const fontMode = localStorage.getItem('fontMode');
+        const body = document.querySelector('body');
+
+        if (noImage) body.classList.add('mode-no-image');
+        if (isSimple) body.classList.add('mode-simple');
+        if (fontMode) {
+            body.style.setProperty('--base-font-size', fontMode);
+        }
+    }
+    initDisability();
+</script>
+
+    <!-- прелоадер -->
+    
+
+    <!-- верхняя плашка новостей -->
+    
+
+    <!-- трансляция -->
+    
+
+    <!-- cookie -->
+        <section class="section section--informer" role="dialog" style="z-index: 5;" data-close-cookie="cookie_agree">
+        <div class="cookie">
+            <div class="container">
+                <div class="grid grid--align-center">
+                    <div class="grid__col grid__col--15 grid__col-lap--12 grid__col-tab--8 grid__col-mob--4">
+                        <div class="editor editor--preview">
+                            <p>
+                                Мы используем cookie-файлы. Оставаясь на сайте, вы соглашаетесь с                                 <a href="/page/politika-cookie/" target="_blank">Политикой использования файлов cookie</a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="grid__col grid__col--5 grid__col-lap--3 grid__col-tab--2 mob-hidden">
+                    </div>
+                    <div class="grid__col grid__col--4 grid__col-lap--3 grid__col-tab--2 grid__col-mob--2">
+                        <button class="button button--dark" data-close aria-label="Закрыть уведомление">
+                            <span class="button__span">
+                                Хорошо                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <header class="header-widget" data-header>
+        <div class="section section--dark section--header">
+            <div class="container container--fluid">
+                <div class="header">
+                    <div class="header__aside">
+                        <!-- ссылка на лого на главную  -->
+                            <a href="/" class="logo-header show-always" aria-label="На главную страницу">
+        <img class="logo-header__image" alt="Московская филармония" src="/project/web/assets/images/logo.svg">
+        <span class="logo-header__text" data-header-logo>Московская филармония</span>
+    </a>
+
+                    </div>
+
+                    <nav class="header__nav">
+                        <!-- главное меню -->
+                                    <a href="/concert/" class="header__link active">
+            Афиша        </a>
+                <a href="/subscription/" class="header__link ">
+            Абонементы        </a>
+                <a href="/kids/" class="header__link ">
+            Детям        </a>
+                <a href="/videos/" class="header__link ">
+            Филармония LIVE        </a>
+    
+
+                    </nav>
+                    <div class="header__toolbar">
+                        <!-- Когда виден like, то скрывается блок с текстом в logo-header - logo-header__text, совсем не удаляй, добавляй ему атрибут hidden (
+                        <button class="button-icon button-icon--invert" data-menu="button" aria-label="Избранное">
+                            <svg class="button-icon__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-favorite"></use>
+                            </svg>
+                        </button>-->
+
+                        <!---------------------------->
+                            <a class="button-icon button-icon--invert" href="/cabinet/auth/" aria-label="Войти в личный кабинет">
+        <svg class="button-icon__icon">
+            <use href="/temp/1769172492_eabcf2bdb47ad05e9151f890d41565bf_sprite-svg.svg#icon-profile">        </svg>
+    </a>
+
+                        <!---------------------------->
+
+                        <button class="button-icon button-icon--invert desktop-only" data-inclusive-button="" aria-label="Инструменты для слабовидящих">
+                            <svg class="button-icon__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-eye"></use>
+                            </svg>
+                        </button>
+                        <a href="/search/" class="button-icon button-icon--invert desktop-only" data-search-button="" aria-label="Поиск по сайту">
+                            <svg class="button-icon__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-search"></use>
+                            </svg>
+                        </a>
+                        <button class="button-icon button-icon--invert" data-menu="button" aria-label="Открыть меню">
+                            <svg class="button-icon__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-burger"></use>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section section--dark section--menu" data-menu="block" hidden>
+            <div class="section__decor">
+                <div class="rules desktop-only">
+                    <div class="rules__content">
+                        <div class="container">
+                            <div class="grid">
+                                <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                                <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                                <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                                <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                                <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="section__content">
+                <div class="menu" data-menu="block">
+                    <div class="menu__header">
+                        <div class="container container--fluid">
+                            <div class="header">
+                                <div class="header__toolbar-menu">
+                                    <button class="button-icon button-icon--invert" data-menu="button" aria-label="Закрыть меню">
+                                        <svg class="button-icon__icon">
+                                            <use href="/project/web/assets/sprite/sprite-svg.svg#icon-close"></use>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menu__content">
+                        <div class="container">
+                            <div class="grid">
+                                <div class="grid__col grid__col--4 grid__col-lap--3 tab-hidden">
+                                    <div class="logo-menu">
+                                        <img
+                                            alt="Московская филармония"
+                                            src="/project/web/assets/images/logo-full-white-rus.svg"
+                                        >
+                                    </div>
+                                </div>
+
+                                <!--баненры в бургере  -->
+                                
+
+
+
+
+
+
+
+<div class="grid__col grid__col--4 grid__col-lap--3 grid__col--comp tab-hidden">
+    <div class="fader fader--start-1 bg-orange">
+        <div class="fader__item">
+            <div class="fader__inner">
+                <a href="https://meloman.ru/subscription/~74sp/" class="article-project">
+                    <p class="article-project__tag">
+                        Абонементы нового сезона
+                    </p>
+                    <picture class="article-project__picture">
+                        <img src="!upload/t_banner_burger/eea66f63-f2d2-484f-84eb-e5b9736b29f7.jpg" alt="Проект">
+                    </picture>
+                    <h3 class="article-project__title">
+                        2026-2027
+                    </h3>
+                    <p class="article-project__caption">
+                        Симфонические и камерные концерты, оперы в концертном исполнении, произведения современных композиторов.
+                    </p>
+                    <div class="article-project__line"></div>
+                    <div class="controls controls--project">
+                        <span class="controls__line"></span>
+                        <svg class="controls__icon">
+                            <use href="/temp/1769172492_eabcf2bdb47ad05e9151f890d41565bf_sprite-svg.svg#icon-arrow-right"></use>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div><div class="grid__col grid__col--4 grid__col-lap--3 grid__col--comp tab-hidden">
+    <div class="fader fader--start-2 bg-pink">
+        <div class="fader__item">
+            <div class="fader__inner">
+                <a href="https://meloman.ru/subscription/~swle/" class="article-project">
+                    <p class="article-project__tag">
+                        Детские абонементы
+                    </p>
+                    <picture class="article-project__picture">
+                        <img src="!upload/t_banner_burger/c2987b12-ae4b-9e5f-ea6d-8703bfe11b6f.jpg" alt="Проект">
+                    </picture>
+                    <h3 class="article-project__title">
+                        2026-2027
+                    </h3>
+                    <p class="article-project__caption">
+                        Образовательные циклы, концерты для всей семьи, музыкальные представления со сказочными персонажами и симфоническим оркестром.
+                    </p>
+                    <div class="article-project__line"></div>
+                    <div class="controls controls--project">
+                        <span class="controls__line"></span>
+                        <svg class="controls__icon">
+                            <use href="/temp/1769172492_eabcf2bdb47ad05e9151f890d41565bf_sprite-svg.svg#icon-arrow-right"></use>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div><div class="grid__col grid__col--4 grid__col-lap--3 grid__col--comp tab-hidden">
+    <div class="fader fader--start-3 bg-green">
+        <div class="fader__item">
+            <div class="fader__inner">
+                <a href="https://meloman.ru/festival/russian-music/" class="article-project">
+                    <p class="article-project__tag">
+                        Фестиваль русской музыки
+                    </p>
+                    <picture class="article-project__picture">
+                        <img src="!upload/t_banner_burger/75447188-23eb-ad23-3386-61e8d249066c.jpg" alt="Проект">
+                    </picture>
+                    <h3 class="article-project__title">
+                        15 ноября — <br>13 декабря
+                    </h3>
+                    <p class="article-project__caption">
+                        Шедевры отечественных композиторов от эпохи барокко до Шостаковича и классика русской литературы
+                    </p>
+                    <div class="article-project__line"></div>
+                    <div class="controls controls--project">
+                        <span class="controls__line"></span>
+                        <svg class="controls__icon">
+                            <use href="/temp/1769172492_eabcf2bdb47ad05e9151f890d41565bf_sprite-svg.svg#icon-arrow-right"></use>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+                                <div class="grid__col grid__col--8 grid__col-lap--6 grid__col-tab--12 grid__col-mob--4">
+                                    <div class="menu-content">
+
+                                        <!-- мобильное меню на бургер -->
+                                        <a class="d-flex align-items-center link-menu fg1" href="/search/">Поиск<svg class="link-blind__icon"><use href="/project/web/assets/sprite/sprite-svg.svg#icon-search"></use></svg></a>
+<nav>
+                        <a href="/concert/" class="link-menu">
+                Афиша            </a>
+                                <a href="/kids/concerts/" class="link-menu">
+                Детская афиша            </a>
+                                <a href="/subscription/" class="link-menu">
+                Абонементы            </a>
+                                <a href="/hall/" class="link-menu">
+                Концертные залы            </a>
+                                <a href="/changes/" class="link-menu">
+                Изменения в афише            </a>
+                                <a href="/slushatelyam/ticket-rules/" class="link-menu">
+                Слушателям            </a>
+                                <div class="menu-slide" data-menu-slide="block">
+                <button class="menu-slide__button" type="button" data-menu-slide="button"><span class="link-menu">Филармония LIVE</span>
+                </button>
+                <div class="menu-slide__content">
+                    <button class="menu-slide__back" type="button" data-menu-slide="button" aria-label="Назад"></button>
+                    <div class="menu-slide__list">
+                        <a href="/videos/" class="link-menu">Филармония LIVE </a>
+                        <a href="/videos/online/" class="link-menu">Трансляции </a>
+                        <a href="/videos/catalogue/" class="link-menu">Видеокаталог </a>
+                        <a href="/videos/regions/" class="link-menu">Регионам </a>
+                        <a href="/videos/rnmso/" class="link-menu">РНМСО</a>
+                    </div>
+                </div>
+            </div>
+            
+    <!--        <a href="/en--><!--" class="link-menu accent tab-visible">en</a>-->
+    </nav>
+
+
+                                        <div class="tab-visible">
+                                            <button class="link-blind" data-inclusive-button="" aria-label="Инструменты для слабовидящих">
+                                                <p class="link-blind__text">
+                                                    Версия для слабовидящих
+                                                </p>
+                                                <svg class="link-blind__icon">
+                                                    <use href="/project/web/assets/sprite/sprite-svg.svg#icon-eye"></use>
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!---------------------------->
+        
+        <!---------------------------->
+
+    </header>
+<main class="main main--regular">
+    <div class="main__rules">
+        <div class="rules desktop-only">
+            <div class="rules__content">
+                <div class="container">
+                    <div class="grid">
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-10"></div>
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-10"></div>
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-10"></div>
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-10"></div>
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-10"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="main__content ">
+    
+    <!--  -->
+
+<section class="main__section over-hidden">
+    <div class="container">
+        <div class="post-detail">
+            <div class="post-detail__part mb-m">
+                <h1 class="title title--classic">
+                    Домашний сезон. Трансляции из Концертного зала Чайковского. Российский национальный оркестр, Михаил Плетнёв, Родион Щедрин
+                </h1>
+            </div>
+            <div class="post-detail__part">
+                <article class="article-season-detail article-season-detail--regular">
+                    <div class="article-season-detail__base">
+                        <div class="article-season-detail__toolbar-mobile">
+                            <div class="toolbar toolbar--medium toolbar--tab-lines">
+                                <div class="toolbar__col toolbar__col--4 toolbar__col-lap--6 toolbar__col-mob--2">
+                                    <time class="info-accent" datetime="11.04.2020 19:00">11.04.20</time>
+                                </div>
+                                <div class="toolbar__col toolbar__col--4 toolbar__col-lap--6 toolbar__col-mob--2">
+                                    <div class="editor editor--preview uppercase"><p>суббота, 19:00
+                                        <br><strong></strong></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="article-season-detail__toolbar">
+                            <div class="toolbar toolbar--large">
+                                <div class="toolbar__col toolbar__col--4 toolbar__col-lap--3 tab-hidden">
+                                    <time class="info-accent" datetime="2001-05-15 19:00">11.04.20</time>
+                                </div>
+                                <div class="toolbar__col toolbar__col--8 toolbar__col-lap--6 tab-hidden">
+                                    <div class="editor editor--preview uppercase">
+                                        <time datetime="11.04.2020 19:00">суббота<br><strong>19:00</strong></time>
+                                    </div>
+                                </div>
+                                <div class="toolbar__col toolbar__col--4 toolbar__col-lap--3 toolbar__col-tab--6 toolbar__col-mob--3">
+                                    <div class="editor editor--preview uppercase"><p><a href="/hall/koncertnyj-zal-chajkovskogo/"> Концертный зал имени <br>П.&nbsp;И.&nbsp;Чайковского  </a></p></div>
+                                </div>
+                                <div class="toolbar__col toolbar__col--4 toolbar__col-lap--3 toolbar__col-tab--6 toolbar__col-mob--1 toolbar__col--controls">
+                                    <span class="info-accent tab-hidden"></span>
+                                    <div class="toolbar__buttons">
+                                        <div class="share" data-share="block">
+    <div class="share__content">
+        <div class="ya-share2" data-url="https://meloman.ru/concert/1585-let-rodion-shedrin-158551019346/" data-title="" data-curtain data-shape="round" data-color-scheme="whiteblack" data-services="vkontakte,odnoklassniki,telegram" data-lang="ru"></div>
+    </div>
+    <div class="share__control">
+        <button class="button-icon" data-share="button">
+            <svg class="button-icon__icon">
+                <use href="/temp/1769172492_eabcf2bdb47ad05e9151f890d41565bf_sprite-svg.svg#icon-share"></use>
+            </svg>
+        </button>
+    </div>
+</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="article-season-detail__gallery">
+                            <div class="grid">
+<!-- фотогалерея -->                   
+                                
+                                    
+                                    <div class="grid__col grid__col--24 grid__col-lap--18">
+                                        <a class="figure" data-fancybox="gallery" href="!upload/t_concert/76fc8017-9f19-a842-ff67-a1d974102f59.jpg" data-caption="">
+                                            <img src="/!upload/croper/1900x1080x1/t_concert/76fc8017-9f19-a842-ff67-a1d974102f59.jpg" alt="Фото 1">
+                                        </a>
+                                    </div> 
+                                    
+                                
+<!-- # фотогалерея --> 
+                            </div>
+                        </div>
+                        <div class="article-season-detail__slider">
+                            <div class="swiper slider-authors" data-slider="gallery-caption">
+                                <div class="slider-authors__controls">
+                                    <button class="button-slide button-slide--prev"
+                                            data-button="prev" aria-label="Предыдущее фото">
+                                        <svg class="button-slide__icon">
+                                            <use href="/temp/1769172492_eabcf2bdb47ad05e9151f890d41565bf_sprite-svg.svg#icon-arrow-left"></use>
+                                        </svg>
+                                    </button>
+                                    <button class="button-slide button-slide--next"
+                                            data-button="next" aria-label="Следующее фото">
+                                        <svg class="button-slide__icon">
+                                            <use href="/temp/1769172492_eabcf2bdb47ad05e9151f890d41565bf_sprite-svg.svg#icon-arrow-right"></use>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="swiper-wrapper">
+<!-- фотогалерея мобила -->                   
+                                
+                                    <div class="swiper-slide slide-author">
+                                        <figure class="figure">
+                                            <img src="/!upload/croper/1900x1080x1/t_concert/76fc8017-9f19-a842-ff67-a1d974102f59.jpg" alt="">
+                                        </figure>
+                                    </div>
+                                
+<!-- # фотогалерея мобила --> 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="article-season-detail__main">
+                            <div class="editor editor--preview">
+                            
+<!-- исполнители линейный список -->                       
+                            <!--  -->
+<p>
+
+    <a href="/performer/rossijskij-nacionalnyj-orkestr/" target="_blank"><b>Российский национальный оркестр</b></a> 
+
+</p><!--  -->
+<p>
+
+    <a href="/performer/mihail-pletnyov/" target="_blank"><b>Михаил Плетнёв</b></a> фортепиано, дирижер
+
+</p><!--  -->
+<p>
+
+    <b>Родион Щедрин</b> фортепиано
+
+</p><!--  -->
+<p>
+
+    <a href="/performer/misha-majskij/" target="_blank"><b>Миша Майский</b></a> виолончель
+
+</p><!--  -->
+<p>
+
+    <a href="/performer/dmitrij-shishkin/" target="_blank"><b>Дмитрий Шишкин</b></a> фортепиано
+
+</p><!--  -->
+<p>
+
+    <a href="/performer/artyom-vargaftik/" target="_blank"><b>Артём Варгафтик</b></a> ведущий
+
+</p>
+                            
+<!-- #исполнители линейный список --> 
+
+                            </div>
+                            <div class="editor editor--preview">
+                            
+<!-- композиторы программа -->
+                            
+                            <p>В программе:</p>
+                            <p><b class="uppercase">Щедрин </b>
+«Старинная музыка российских провинциальных цирков» – концерт № 3 для оркестра<br>«Романтические дуэты» (№№ 3, 4) для фортепиано в четыре руки<br>«Москва – Петушки» – драматический фрагмент для оркестра<br>Концерт № 6 (Concerto lontano) для фортепиано и струнного оркестра<br>«В подражание Альбенису» (переложение для виолончели и фортепиано М.Хомицера)<br>
+</p>
+                            
+                            
+<!-- #композиторы программа -->  
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="article-season-detail__aside">
+                        <div class="article-season-detail__control">
+                             <!-- единый компонент всех вохможных кнопок -->
+    
+                                                    </div>
+                    </div>
+                </article>  
+            </div>
+            
+<!-- цитаты -->
+            
+<!-- #цитаты -->   
+
+            
+            
+<!-- сервисный текст -->
+            
+<!-- #сервисный текст --> 
+
+<!-- video -->  
+            
+<!-- #video --> 
+
+        </div>
+    </div>
+</section>
+
+
+
+
+
+<!-- концерты этого абонемента -->  
+ 
+<!-- #концерты этого абонемента --> 
+
+    </div>
+</main>
+
+<footer class="footer footer--temp">
+    <div class="footer__rules">
+        <div class="rules desktop-only">
+            <div class="rules__content">
+                <div class="container">
+                    <div class="grid">
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                        <div class="grid__col grid__col--4 grid__col-lap--3 rule-70"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer__content">
+        <div class="container">
+            <div class="grid footer-grid">
+                <div class="grid__col grid__col--8 grid__col-lap--6 grid__col-tab--12 grid__col-mob--4 tab-hidden">
+                    <div class="logo-footer logo-footer--rus show-always">
+                        <img alt="Московская филармония" src="/project/web/assets/images/logo-full-white-rus.svg">
+                    </div>
+                </div>
+                <div class="grid__col grid__col--4 grid__col-lap--3 grid__col-tab--6 grid__col-mob--2 order-tab-2 mb-tab-l">
+                    <div class="editor editor--footer">
+
+                        <!---------------------------->
+                        
+
+<h3>
+    Концерты
+</h3>
+<p>
+    <a class="block" href="/concert/" >Афиша</a><a class="block" href="/subscription/" >Абонементы</a><a class="block" href="/kids/concerts/" >Детская афиша</a><a class="block" href="/hall/" >Концертные залы</a><a class="block" href="/changes/" >Изменения в афише</a>
+</p>
+                        <!---------------------------->
+
+                    </div>
+                </div>
+                <div class="grid__col grid__col--4 grid__col-lap--3 grid__col-tab--6 grid__col-mob--2 order-tab-3 mb-tab-l">
+                    <div class="editor editor--footer">
+
+                        <!---------------------------->
+                        
+
+<h3>
+    Слушателям
+</h3>
+<p>
+    <a class="block" href="/slushatelyam/ticket-rules/" >Правила покупки билетов и абонементов</a><a class="block" href="/slushatelyam/rules/" >Правила посещения</a><a class="block" href="/slushatelyam/dostupnaya-sreda/" >Доступная среда</a><a class="block" href="/slushatelyam/contacts/" >Контакты</a><a class="block" href="/slushatelyam/bonus-program/" >Бонусная программа</a><a class="block" href="/slushatelyam/akciya-teatralno-koncertnaya-nedelya/" >Участникам СВО</a>
+</p>
+                        <!---------------------------->
+
+                        <p>Справки по телефону:<br>
+                            <a href="tel:+7 495 232 53 53"><b>+7 495 232 53 53</b></a>
+                        </p>
+                    </div>
+                </div>
+                <div class="grid__col grid__col--4 grid__col-lap--3 grid__col-tab--6 grid__col-mob--2 order-tab-5">
+                    <div class="editor editor--footer">
+                        <h3>Кассы</h3>
+
+                        <!---------------------------->
+                        
+
+<!--  -->
+<p>
+    <b>Концертный зал имени П.&nbsp;И.&nbsp;Чайковского</b><br>
+    Триумфальная площадь, 4<br>
+    
+    С 10:00 до 21:00
+</p>
+<!--  -->
+<p>
+    <b>Концертный комплекс «Филармония-2»</b><br>
+    Мичуринский проспект, Олимпийская деревня, дом 1<br>
+    
+    С 9:00 до 22:00
+</p>
+
+                        <!---------------------------->
+
+                        <p></p>
+                    </div>
+                </div>
+                <div class="grid__col grid__col--4 grid__col-lap--3 grid__col-tab--6 grid__col-mob--2 order-tab-4">
+                    <div class="stack stack--m">
+                        <div class="editor editor--footer">
+
+                            <!---------------------------->
+                            
+
+<h3>
+    Официальные документы
+</h3>
+<p>
+    <a class="block" href="/oficialnye-dokumenty/oficialnye-svedeniya/" >Официальные сведения</a><a class="block" href="/oficialnye-dokumenty/protivodejstvie-korrupcii/" >Противодействие коррупции</a><a class="block" href="/oficialnye-dokumenty/nezavisimaya-ocenka-kachestva/" >Независимая оценка качества</a><a class="block" href="/oficialnye-dokumenty/politika-konfidencialnosti/" >Политика конфиденциальности</a>
+</p>
+                            <!---------------------------->
+
+                        </div>
+
+                        <div class="footer-partner-stack tab-flex">
+                            <a href="https://www.culture.ru/pushkinskaya-karta" class="link-pushkin-card" aria-label="Пушкинская карта">
+                                <img src="/project/web/assets/images/puskin-card.png" alt="Пушкинская карта">
+                            </a>
+                            <a href="https://www.culture.ru/" class="link-culture" aria-label="Министерство культуры" target="_blank" rel="nofollow noopener noreferrer">
+                                <img src="/project/web/assets/images/logo-culture.svg" alt="логотип министерства культуры">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid__col--8 grid__col-lap--6 grid__col-tab--12 grid__col-mob--4 mb-tab-xl order-tab-1">
+
+                    <!---------------------------->
+                    
+<form action="" class="form-subscribe" data-form="block" method="post" name="emailer">
+    <h3 class="form-subscribe__title">Подписаться<br>на рассылку московской<br>филармонии</h3>
+    <div class="form-subscribe__main">
+        <label class="input-subscribe" data-input="block">
+            <span class="input-subscribe__wrapper">
+                <input type="email" class="input-subscribe__input" name="email" data-input="field" placeholder="Ваша почта" aria-label="Email для подписки на рассылку" required="">
+                <button class="input-subscribe__button" aria-label="Подписаться" type="submit">
+                    <svg class="input-subscribe__icon">
+                        <use href="/project/web/assets/sprite/sprite-svg.svg#icon-subscribe"></use>
+                    </svg>
+                </button>
+            </span>
+            <span class="input-subscribe__message caption-error">Пожалуйста, укажите корректный e-mail</span>
+        </label>
+        <div class="form-subscribe__footer">
+            <label class="checkbox-regular checkbox-regular--light" data-checkbox="block">
+                <span class="checkbox-regular__box focus-parent" data-checkbox="box">
+                    <input type="checkbox" name="name1234" class="checkbox-regular__input" data-checkbox="field" required="">
+                    <svg class="checkbox-regular__icon"><use href="/project/web/assets/sprite/sprite-svg.svg#icon-check"></use></svg>
+                </span>
+                <span class="checkbox-regular__text">Я даю своё согласие на обработку моих персональных данных в соответствии с Федеральным законом от 27 июля 2006 г. № 152-ФЗ «О персональных данных»,
+                    <a href="/!upload/t_set/4191b5b8dc90f67edfc161bdfcd0c733.pdf" target="_blank">Политикой в отношении обработки персональных данных</a> и
+                    <a href="/oficialnye-dokumenty/politika-konfidencialnosti/" target="_blank">Политикой конфиденциальности</a>
+                </span>
+            </label>
+            <div class="caption-error editor-simple" hidden="hidden">
+                <p></p>
+            </div>
+        </div>
+    </div>
+    <div class="form-subscribe__result editor-simple">
+        <p>Спасибо! Мы отправили письмо на указанный e-mail. Пожалуйста, подтвердите подписку, перейдя по ссылке в письме</p>
+    </div>
+</form>
+                    <!---------------------------->
+
+                </div>
+                <div class="grid__col grid__col--4 grid__col-lap--3 tab-hidden"></div>
+                <div class="grid__col grid__col--4 grid__col-lap--3 footer-align-cell order-tab-7 mt-xl">
+                    <div class="caption-footer editor-simple"><a href="/!upload/t_set/4191b5b8dc90f67edfc161bdfcd0c733.pdf">Политика в отношении<br class="mobile-visible"> обработки
+                        и защиты<br class="mobile-visible"> персональных данных</a></div>
+                </div>
+                <div class="grid__col grid__col--4 grid__col-lap--3 footer-align-cell order-tab-8">
+                    <div class="caption-footer editor-simple"><p>© Московская филармония,<br> 2012—2026</p></div>
+                </div>
+                <div class="grid__col grid__col--4 grid__col-lap--3 footer-align-cell tab-hidden">
+                    <div class="footer-partner-stack">
+                        <a href="https://www.culture.ru/pushkinskaya-karta" class="link-pushkin-card" aria-label="Пушкинская карта">
+                            <img src="/project/web/assets/images/puskin-card.png" alt="Пушкинская карта">
+                        </a>
+                        <a href="https://www.culture.ru/" class="link-culture" aria-label="Министерство культуры" target="_blank" rel="nofollow noopener noreferrer">
+                            <img src="/project/web/assets/images/logo-culture.svg" alt="логотип министерства культуры">
+                        </a>
+                    </div>
+                </div>
+                <div class="grid__col--20 grid__col-lap--15 grid__col-tab--12 grid__col-mob--4 order-tab-6 mt-s mt-lap-l mt-tab-xl">
+                    <div class="socials">
+                        <div class="socials__cell"><a href="https://vk.com/mosfilarmonia" class="socials__link" aria-label="Мы ВКонтакте">
+                            <svg class="socials__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-vk"></use>
+                            </svg>
+                        </a></div>
+                        <div class="socials__cell"><a href="https://t.me/mosfilarmonia" class="socials__link" aria-label="Наш Телеграм">
+                            <svg class="socials__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-tg"></use>
+                            </svg>
+                        </a></div>
+                        <div class="socials__cell"><a href="https://www.youtube.com/mosfilarmonia" class="socials__link" aria-label="Наш YouTube канал">
+                            <svg class="socials__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-youtube"></use>
+                            </svg>
+                        </a></div>
+                        <div class="socials__cell"><a href="https://ok.ru/mosfilarmonia" class="socials__link" aria-label="Мы в Одноклассниках">
+                            <svg class="socials__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-ok"></use>
+                            </svg>
+                        </a></div>
+                        <div class="socials__cell"><a href="https://dzen.ru/meloman" class="socials__link" aria-label="Мы в Дзене">
+                            <svg class="socials__icon">
+                                <use href="/project/web/assets/sprite/sprite-svg.svg#icon-dzen"></use>
+                            </svg>
+                        </a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!---------------------------->
+
+<!---------------------------->
+
+<!--
+button-return--right - чтобы позиционировать справа
+button-return--center - чтобы позиционировать по центру
+-->
+<a href="#body" class="button-return button-return--right z-index-3" hidden="hidden" data-button-return="" aria-label="Вернуться в начало страницы">
+    <svg class="button-return__icon">
+        <use href="/project/web/assets/sprite/sprite-svg.svg#icon-return"></use>
+    </svg>
+</a>
+
+</div>
+
+<script src="temp/1780847681_fba8448793a0be705ff1a5016c3b9e72_bundle.js"></script>
+<script src="/project/web/js/jquery-3.4.1.min.js"></script>
+<script src="temp/1774601474_7ea764b465246f21de8c47a2e4d9dd78_datasorter.js"></script>
+<script src="temp/1770192788_166def524fb03efff94e00429fa5eb05_custom.js"></script>
+<script src="//yastatic.net/share2/share.js"></script>
+
+
+<div data-total-loading></div>
+<div data-admin>
+
+</div>
+<input type="hidden" name="pageid" value="11600">
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+
+    /* TODO-910: ID должен быть подставлен из админки */
+    window.metricID = 48126251;
+
+    const initMetric = () => {
+        // if (window.location.hostname === "localhost" ) return;
+
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script',`https://mc.yandex.ru/metrika/tag.js?id=${metricID}`, 'ym');
+
+        ym(metricID, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
+    }
+
+    initMetric();
+</script>
+<!-- /Yandex.Metrika counter -->
+
+<!-- Carrot quest BEGIN -->
+<script type="text/javascript" src="/project/web/js/carrot.js">
+
+</script>
+<!-- Carrot quest END -->
+
+
+
+</body>
+</html>
