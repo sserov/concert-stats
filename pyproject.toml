@@ -23,6 +23,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/concert_stats"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/concert_stats/dashboard_template.html" = "concert_stats/dashboard_template.html"
+
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]

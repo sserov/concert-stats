@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Композиторы: Филармония и Консерватория, 2016–2026</title>
+<script src="https://cdn.plot.ly/plotly-3.x.min.js"></script>
+<style>
+  :root { --ink:#1f2430; --muted:#6b7280; --bg:#fafaf8; --card:#ffffff; --line:#e5e7eb; }
+  body { font-family: Georgia, 'Times New Roman', serif; background:var(--bg); color:var(--ink);
+         margin:0; padding:24px; }
+  h1 { font-size:26px; font-weight:normal; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:14px; margin-bottom:20px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:1400px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .card h2 { font-size:16px; font-weight:normal; margin:0 0 10px; border-bottom:1px solid var(--line);
+             padding-bottom:6px; }
+  .controls { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; font-family:sans-serif; font-size:13px; }
+  select, input { font:inherit; padding:4px 6px; }
+  #trend { grid-column:1 / -1; }
+  table { border-collapse:collapse; width:100%; font-size:13px; font-family:sans-serif; }
+  th, td { text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); }
+  tr.sel td { background:#eef3ff; }
+  .note { color:var(--muted); font-size:12px; margin-top:8px; }
+</style>
+</head>
+<body>
+<h1>Композиторы в двух залах: кто в тренде</h1>
+<div class="sub">Московская филармония (meloman.ru) и консерватория (mosconsv.ru), сезоны 2016/17–2025/26.
+Концерты без распознанных композиторов: <span id="q"></span>%</div>
+<div class="controls">
+  <label>Зал <select id="f-venue">
+    <option value="all">оба</option>
+    <option value="meloman">филармония</option>
+    <option value="mosconsv">консерватория</option>
+  </select></label>
+  <label>Сезон <select id="f-season"><option value="all">все</option></select></label>
+  <label>Поиск <input id="f-search" placeholder="композитор"></label>
+  <button id="clear">сбросить выбор</button>
+</div>
+<div class="grid">
+  <div class="card"><h2>Топ композиторов (концерты)</h2><div id="top"></div></div>
+  <div class="card"><h2>Композитор × сезон</h2><div id="heatmap"></div></div>
+  <div class="card" id="trend"><h2>Доля сезонов с композитором, % — тренды и юбилеи</h2><div id="trendplot"></div>
+    <div class="note">Пунктир — юбилейный год (50/100-летие от даты рождения или смерти).</div></div>
+  <div class="card"><h2>Покрытие данных по годам</h2><div id="coverage"></div>
+    <div class="note">Провалы: ковид 2020–21; филармония до 2019 — частичный захват Wayback.</div></div>
+</div>
+<script>
+window.DATASET = __DATA__;</script>
+<script>
+(function () {
+  var D = window.DATASET;
+  var selected = [];
+  var seasons = Array.from(new Set(D.concerts.map(function (c) { return c.season; }))).sort();
+  var seasonSel = document.getElementById('f-season');
+  seasons.forEach(function (s) {
+    var o = document.createElement('option'); o.value = s; o.textContent = s; seasonSel.appendChild(o);
+  });
+  document.getElementById('q').textContent = D.quality.without_composers_pct;
+
+  function filtered() {
+    return D.concerts.filter(function (c) {
+      if (document.getElementById('f-venue').value !== 'all' && c.source !== document.getElementById('f-venue').value) return false;
+      var s = seasonSel.value;
+      if (s !== 'all' && c.season !== s) return false;
+      return true;
+    });
+  }
+
+  function nameOf(cid) {
+    var c = D.composers[cid]; return c ? c.name : cid;
+  }
+
+  function anniversaryYears(cid) {
+    var c = D.composers[cid] || {}; var ys = [];
+    [c.born, c.died].forEach(function (y) {
+      if (!y) return;
+      [50, 100, 125, 150, 175, 200, 250].forEach(function (k) {
+        var a = y + k;
+        if (a >= 2016 && a <= 2026) ys.push({ year: a, kind: (y === c.born ? 'рождение ' : 'смерть ') + y + '+' + k });
+      });
+    });
+    return ys;
+  }
+
+  function drawTop() {
+    var rows = filtered(); var counts = {};
+    rows.forEach(function (c) { c.composers.forEach(function (cid) { counts[cid] = (counts[cid] || 0) + 1; }); });
+    var pairs = Object.keys(counts).map(function (cid) { return [cid, counts[cid]]; })
+      .filter(function (p) { return selected.length === 0 || selected.indexOf(p[0]) >= 0; })
+      .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 25);
+    var q = document.getElementById('f-search').value.trim().toLowerCase();
+    if (q) pairs = pairs.filter(function (p) { return nameOf(p[0]).toLowerCase().indexOf(q) >= 0; });
+    var data = [{ type: 'bar', orientation: 'h', x: pairs.map(function (p) { return p[1]; }),
+      y: pairs.map(function (p) { return nameOf(p[0]); }) }];
+    Plotly.newPlot('top', data, { margin: { l: 180, r: 20, t: 10, b: 30 }, height: 480 }, { displayModeBar: false });
+  }
+
+  function drawHeatmap() {
+    var rows = filtered(); var per = {}; var total = {};
+    rows.forEach(function (c) {
+      total[c.season] = (total[c.season] || 0) + 1;
+      c.composers.forEach(function (cid) {
+        per[cid] = per[cid] || {}; per[cid][c.season] = (per[cid][c.season] || 0) + 1;
+      });
+    });
+    var top = Object.keys(per).map(function (cid) {
+      var n = 0; seasons.forEach(function (s) { n += per[cid][s] || 0; }); return [cid, n];
+    }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 40).map(function (p) { return p[0]; });
+    var z = top.map(function (cid) { return seasons.map(function (s) { return (per[cid] && per[cid][s]) || 0; }); });
+    Plotly.newPlot('heatmap', [{ type: 'heatmap', z: z, x: seasons,
+      y: top.map(nameOf), colorscale: 'Viridis' }],
+      { margin: { l: 180, r: 20, t: 10, b: 40 }, height: 640 }, { displayModeBar: false });
+  }
+
+  function drawTrend() {
+    var list = selected.length ? selected : ['shostakovich', 'tchaikovsky', 'rachmaninoff', 'beethoven', 'mozart']
+      .filter(function (cid) { return D.composers[cid]; });
+    var venue = document.getElementById('f-venue').value;
+    var traces = [];
+    list.forEach(function (cid) {
+      var shares = seasons.map(function (s) {
+        var n = 0, t = 0;
+        D.concerts.forEach(function (c) {
+          if (c.season !== s) return;
+          if (venue === 'all' || c.source === venue) {
+            t++; if (c.composers.indexOf(cid) >= 0) n++;
+          }
+        });
+        return t ? 100 * n / t : null;
+      });
+      traces.push({ type: 'scatter', mode: 'lines+markers', name: nameOf(cid), x: seasons, y: shares });
+    });
+    var shapes = [];
+    list.forEach(function (cid) {
+      anniversaryYears(cid).forEach(function (a) {
+        var idx = seasons.findIndex(function (s) { return s.slice(0, 4) === String(a.year); });
+        if (idx >= 0) shapes.push({ type: 'line', x0: idx, x1: idx, y0: 0, y1: 1, yref: 'paper',
+          line: { dash: 'dot', width: 1 } });
+      });
+    });
+    Plotly.newPlot('trendplot', traces,
+      { margin: { l: 50, r: 20, t: 10, b: 40 }, height: 420, yaxis: { title: '% концертов сезона' }, shapes: shapes },
+      { displayModeBar: false });
+  }
+
+  function drawCoverage() {
+    var rows = D.coverage.by_year;
+    Plotly.newPlot('coverage', [
+      { type: 'bar', name: 'филармония', x: rows.map(function (r) { return r.year; }),
+        y: rows.map(function (r) { return r.meloman; }) },
+      { type: 'bar', name: 'консерватория', x: rows.map(function (r) { return r.year; }),
+        y: rows.map(function (r) { return r.mosconsv; }) }
+    ], { barmode: 'stack', margin: { l: 50, r: 20, t: 10, b: 30 }, height: 240 }, { displayModeBar: false });
+  }
+
+  function redraw() { drawTop(); drawHeatmap(); drawTrend(); drawCoverage(); }
+  ['f-venue', 'f-season'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', redraw);
+  });
+  document.getElementById('f-search').addEventListener('input', drawTop);
+  document.getElementById('clear').addEventListener('click', function () { selected = []; redraw(); });
+  document.getElementById('trend').addEventListener('dblclick', function () { selected = []; redraw(); });
+
+  // click a top bar toggles composer into trend selection
+  document.getElementById('top').on('plotly_click', function (ev) {
+    var name = ev.points[0].y;
+    var cid = Object.keys(D.composers).find(function (k) { return D.composers[k].name === name; });
+    if (!cid) return;
+    var i = selected.indexOf(cid);
+    if (i >= 0) selected.splice(i, 1); else selected.push(cid);
+    drawTrend();
+  });
+  redraw();
+})();
+</script>
+</body>
+</html>
