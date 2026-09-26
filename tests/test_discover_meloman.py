@@ -33,3 +33,14 @@ def test_extract_event_links_from_listing():
         "https://meloman.ru/concert/kzch-2026-09-27/",
         "https://meloman.ru/concert/mzf-2020-11-05/",
     }
+
+
+def test_url_in_range_filters_by_slug_year():
+    from concert_stats.discover_meloman import url_in_range
+
+    assert url_in_range("https://meloman.ru/concert/kzch-2026-09-27/", 2016, 2026)
+    assert not url_in_range("https://meloman.ru/concert/kzch-2026-09-27/", 2016, 2023)
+    # no slug date -> keep, date resolved later from page content
+    assert url_in_range(
+        "https://meloman.ru/concert/1585-let-rodion-shedrin-158551019346/", 2016, 2026
+    )

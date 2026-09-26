@@ -13,6 +13,13 @@ DATA_DIR = Path("data")
 
 _EVENT_URL_RE = re.compile(r"meloman\.ru/(?:concert|afisha)/[a-z0-9-]+/?", re.I)
 _HREF_RE = re.compile(r'href="([^"]+)"')
+_SLUG_YEAR_RE = re.compile(r"-(\d{4})-\d{2}-\d{2}/?$")
+
+
+def url_in_range(url: str, year_from: int, year_to: int) -> bool:
+    """Slug-dated URLs must fall in the range; undated URLs are kept."""
+    m = _SLUG_YEAR_RE.search(url)
+    return m is None or year_from <= int(m.group(1)) <= year_to
 
 
 def _is_event_url(url: str) -> bool:
@@ -69,7 +76,8 @@ def discover(year_from: int, year_to: int, out_path: Path, cache_dir: Path) -> N
             page = fetch(wayback_url(ts, original), cache_dir)
             if page:
                 for link in extract_event_links(page):
-                    found.setdefault(link, None)
+                    if url_in_range(link, year_from, year_to):
+                        found.setdefault(link, None)
 
     cdx = fetch(
         _cdx_query(f"url=meloman.ru/concert/*&from={year_from}&to={year_to}&collapse=urlkey"),
@@ -77,7 +85,8 @@ def discover(year_from: int, year_to: int, out_path: Path, cache_dir: Path) -> N
     )
     if cdx:
         for ts, original in parse_cdx(cdx):
-            found.setdefault(original, ts)
+            if url_in_range(original, year_from, year_to):
+                found.setdefault(original, ts)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as out:
