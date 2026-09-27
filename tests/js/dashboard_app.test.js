@@ -103,3 +103,14 @@ test("effectiveSelection defaults to top-5 without mutating state", () => {
   assert.deepStrictEqual(
     S.effectiveSelection(AGG, { ...baseState, selected: ["mozart"] }, meta), ["mozart"]);
 });
+
+test("trendViewModel caps traces and carries counts per point", () => {
+  const vm = S.trendViewModel(AGG, { ...baseState, selected: ["bach", "mozart", "x1", "x2", "x3", "x4", "x5"] }, meta);
+  assert.ok(vm.traces.length <= 6);
+  for (const tr of vm.traces) {
+    assert.strictEqual(tr.shares.length, vm.x.length);
+    for (let i = 0; i < tr.shares.length; i++) assert.ok(tr.counts[i] !== undefined);
+  }
+  const vmCount = S.trendViewModel(AGG, { ...baseState, metric: "count", selected: ["bach"] }, meta);
+  assert.deepStrictEqual(vmCount.traces[0].values, vmCount.traces[0].counts);
+});

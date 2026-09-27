@@ -3,7 +3,10 @@
 "use strict";
 
 const MAX_SELECTED = 6;
-const PALETTE = ["#8C2635", "#536B63", "#A77A2B", "#3E5C76", "#7A5C3E", "#4F6228"];
+/* Slots 1–3 are the spec hall/jubilee tokens; 4–6 re-stepped to pass CVD and
+ * normal-vision separation checks on the #F7F5F0 surface (dataviz validator). */
+const PALETTE = ["#8C2635", "#536B63", "#A77A2B", "#4E6FA3", "#6E4A38", "#5F8248"];
+const MARKERS = ["circle", "diamond", "square", "triangle-up", "cross", "x"];
 
 /* ---------- helpers ---------- */
 
@@ -183,6 +186,40 @@ function jubileeMap(AGG) {
 function effectiveSelection(AGG, state, meta) {
   if (state.selected.length > 0) return state.selected.slice();
   return getComposerRanking(AGG, state, meta).slice(0, 5).map((r) => r.cid);
+}
+
+/* View-model for the main trend chart: one trace per selected composer,
+ * plus jubilee annotations and the COVID band range. */
+function trendViewModel(AGG, state, meta) {
+  meta = _meta(meta);
+  const cids = effectiveSelection(AGG, state, meta).slice(0, MAX_SELECTED);
+  const range = seasonsInRange(AGG, state);
+  const trends = getComposerTrend(AGG, { ...state, metric: "share" }, cids, meta);
+  const counts = getComposerTrend(AGG, { ...state, metric: "count" }, cids, meta);
+  const jMap = jubileeMap(AGG);
+  const traces = cids.map((cid, i) => {
+    const tr = trends.find((t) => t.cid === cid);
+    const ct = counts.find((t) => t.cid === cid);
+    return {
+      cid,
+      name: _name(meta, cid),
+      color: PALETTE[i % PALETTE.length],
+      symbol: MARKERS[i % MARKERS.length],
+      shares: tr ? tr.values : range.map(() => null),
+      counts: ct ? ct.values : range.map(() => 0),
+      values: state.metric === "count" ? (ct ? ct.values : []) : (tr ? tr.values : []),
+    };
+  });
+  const annotations = [];
+  traces.forEach((tr) => {
+    range.forEach((s, i) => {
+      const label = jMap[`${tr.cid}|${s}`];
+      if (label && tr.shares[i] !== null) {
+        annotations.push({ x: s, y: tr.shares[i], text: label, cid: tr.cid });
+      }
+    });
+  });
+  return { x: range, traces, annotations, covidRange: ["2019/20", "2020/21"] };
 }
 
 /* ---------- selection state (pure mutations) ---------- */
@@ -395,19 +432,126 @@ function renderAll() {
   for (const fn of RENDERERS) fn();
 }
 
+/* ---------- renderTrend: the dominant chart ---------- */
+
+function _trendExtra(i, range, cid, tr) {
+  const s = range[i];
+  const parts = [];
+  if (state.hall === "all") {
+    const mel = _composerCount(AGG, cid, s, "meloman");
+    const cons = _composerCount(AGG, cid, s, "mosconsv");
+    parts.push(`филармония ${mel} · консерватория ${cons}`);
+  }
+  const j = jubileeMap(AGG)[`${cid}|${s}`];
+  if (j) parts.push(j);
+  if (s === AGG.current_season) parts.push("Сезон продолжается; данные неполные");
+  return parts.length ? "<br>" + parts.join("<br>") : "";
+}
+
+function _trendTraces(vm) {
+  return vm.traces.map((tr) => ({
+    type: "scatter",
+    mode: "lines+markers",
+    name: tr.name,
+    meta: [tr.cid],
+    x: vm.x,
+    y: tr.values,
+    line: { color: tr.color, width: 2, shape: "spline" },
+    marker: { symbol: tr.symbol, size: 7, color: tr.color },
+    connectgaps: false,
+    customdata: tr.values.map((v, i) => [
+      tr.shares[i] === null ? "—" : `${_fmtRu(tr.shares[i], 1)}%`,
+      tr.counts[i],
+      _trendExtra(i, vm.x, tr.cid, tr),
+    ]),
+    hovertemplate:
+      "Сезон %{x}<br>%{fullData.name}<br>%{customdata[0]}<br>" +
+      "концертов: %{customdata[1]}%{customdata[2]}<extra></extra>",
+  }));
+}
+
+function _trendLayout(vm) {
+  const isShare = state.metric === "share";
+  const ticktext = vm.x.map((s) => (s === AGG.current_season ? `${s} (тек.)` : s));
+  const layout = {
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 13 },
+    margin: { l: 64, r: 24, t: 24, b: 48 },
+    showlegend: true,
+    legend: { orientation: "h", y: -0.15 },
+    xaxis: {
+      tickvals: vm.x, ticktext, ticklen: 4,
+      gridcolor: "#DDD9D0", linecolor: "#DDD9D0",
+    },
+    yaxis: isShare
+      ? { title: { text: "% концертов сезона" }, ticksuffix: "%", gridcolor: "#DDD9D0", range: [0, null] }
+      : { title: { text: "концертов за сезон" }, tickformat: ",d", gridcolor: "#DDD9D0", range: [0, null] },
+    hovermode: "x unified",
+    shapes: [{
+      type: "rect", x0: vm.covidRange[0], x1: vm.covidRange[1],
+      yref: "paper", y0: 0, y1: 1,
+      fillcolor: "#77736B", opacity: 0.06, line: { width: 0 },
+    }],
+    annotations: [
+      {
+        x: vm.covidRange[0], y: 1, yref: "paper", text: "ковид",
+        showarrow: false, font: { color: "#77736B", size: 11 }, yshift: 10,
+      },
+      ...vm.annotations.map((a) => ({
+        x: a.x, y: a.y, text: a.text, showarrow: true, arrowhead: 2, arrowsize: 0.6,
+        arrowwidth: 0.8, arrowcolor: "#A77A2B",
+        font: { color: "#22211F", size: 10 },
+        bgcolor: "rgba(167,122,43,0.15)", ay: -24,
+      })),
+    ],
+  };
+  return layout;
+}
+
+function renderTrend() {
+  const vm = trendViewModel(AGG, state, META);
+  const div = $id("trend-plot");
+  const total = scopeTotals(AGG, state).total;
+  const top = vm.traces
+    .map((tr) => {
+      const n = tr.counts.reduce((a, b) => a + b, 0);
+      return `${tr.name} ${_fmtRu(_share(n, total), 1)}%`;
+    })
+    .slice(0, 3)
+    .join(", ");
+  $id("trend-summary").textContent =
+    `В выборке ${_fmtRu(total)} концертов; лидеры диапазона: ${top}`;
+  const cfg = { displayModeBar: false, responsive: true };
+  Plotly.newPlot(div, _trendTraces(vm), _trendLayout(vm), cfg).then(() => {
+    if (!div._clickBound) {
+      div._clickBound = true;
+      div.on("plotly_click", (ev) => {
+        const cid = ev.points[0] && ev.points[0].meta && ev.points[0].meta[0];
+        if (cid && typeof openComposerDrawer === "function") openComposerDrawer(cid);
+      });
+    }
+  });
+}
+
 /* ---------- node:test exports (no DOM at module scope) ---------- */
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     seasonsInRange, scopeTotals, getComposerRanking, getComposerTrend,
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
-    effectiveSelection, addSelected, removeSelected,
+    effectiveSelection, addSelected, removeSelected, trendViewModel,
   };
 }
 if (typeof document !== "undefined" && typeof window !== "undefined") {
   window.DashApp = {
     seasonsInRange, scopeTotals, getComposerRanking, getComposerTrend,
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
-    effectiveSelection, addSelected, removeSelected, init,
+    effectiveSelection, addSelected, removeSelected, trendViewModel, init,
   };
+}
+/* Script tag sits at the end of <body>: DOM exists, safe to register renders. */
+if (typeof document !== "undefined" && typeof window !== "undefined") {
+  RENDERERS.push(renderTrend);
+  window.addEventListener("load", init);
 }
