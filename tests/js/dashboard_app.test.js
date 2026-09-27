@@ -114,3 +114,29 @@ test("trendViewModel caps traces and carries counts per point", () => {
   const vmCount = S.trendViewModel(AGG, { ...baseState, metric: "count", selected: ["bach"] }, meta);
   assert.deepStrictEqual(vmCount.traces[0].values, vmCount.traces[0].counts);
 });
+
+test("rankingViewModel sorts and limits rows", () => {
+  const rows = [
+    { cid: "mozart", name: "Моцарт", count: 6, share: 17, delta: null },
+    { cid: "bach", name: "Бах", count: 12, share: 34, delta: 10 },
+    { cid: "haydn", name: "Гайдн", count: 9, share: 25, delta: -2 },
+  ];
+  const vm = S.rankingViewModel(rows, { sortKey: "count", sortDir: "desc", query: "", limit: 2 });
+  assert.deepStrictEqual(vm.rows.map((r) => r.cid), ["bach", "haydn"]);
+  const byName = S.rankingViewModel(rows, { sortKey: "name", sortDir: "asc", query: "", limit: 3 });
+  assert.deepStrictEqual(byName.rows.map((r) => r.name), ["Бах", "Гайдн", "Моцарт"]);
+  const filtered = S.rankingViewModel(rows, { sortKey: "share", sortDir: "desc", query: "ба", limit: 3 });
+  assert.deepStrictEqual(filtered.rows.map((r) => r.cid), ["bach"]);
+});
+
+test("delta is null with a single completed season", () => {
+  const r = S.getComposerRanking(
+    AGG, { ...baseState, seasonFrom: "2026/27", seasonTo: "2026/27" }, meta);
+  assert.strictEqual(r.find((x) => x.cid === "bach").deltaFirstSeason, null);
+});
+
+test("fmtDelta formats russian percentage points", () => {
+  assert.strictEqual(S.fmtDelta(3.14), "+3,1 п.п.");
+  assert.strictEqual(S.fmtDelta(-2.05), "−2,1 п.п.");
+  assert.strictEqual(S.fmtDelta(null), "—");
+});

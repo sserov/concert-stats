@@ -188,6 +188,32 @@ function effectiveSelection(AGG, state, meta) {
   return getComposerRanking(AGG, state, meta).slice(0, 5).map((r) => r.cid);
 }
 
+/* Delta in percentage points, ru-formatted; "—" when no pair of completed seasons. */
+function fmtDelta(d) {
+  if (d === null || d === undefined) return "—";
+  const sign = d < 0 ? "−" : "+";
+  return `${sign}${_fmtRu(Math.abs(d), 1)} п.п.`;
+}
+
+/* Filter → sort → limit for the ranking table. */
+function rankingViewModel(rows, opts) {
+  let out = rows.slice();
+  if (opts.query) {
+    const q = opts.query.trim().toLowerCase();
+    out = out.filter((r) => r.name.toLowerCase().includes(q));
+  }
+  const dir = opts.sortDir === "asc" ? 1 : -1;
+  out.sort((a, b) => {
+    const va = a[opts.sortKey];
+    const vb = b[opts.sortKey];
+    if (typeof va === "string") return dir * va.localeCompare(vb, "ru");
+    const na = va === null || va === undefined ? -Infinity : va;
+    const nb = vb === null || vb === undefined ? -Infinity : vb;
+    return dir * (na - nb);
+  });
+  return { rows: out.slice(0, opts.limit), total: out.length };
+}
+
 /* View-model for the main trend chart: one trace per selected composer,
  * plus jubilee annotations and the COVID band range. */
 function trendViewModel(AGG, state, meta) {
@@ -432,6 +458,102 @@ function renderAll() {
   for (const fn of RENDERERS) fn();
 }
 
+/* ---------- renderRanking: sortable table with sparklines ---------- */
+
+function _sparklineSvg(values) {
+  const w = 72;
+  const h = 20;
+  const pts = values
+    .map((v, i) => ({ v, i }))
+    .filter((p) => p.v !== null && p.v !== undefined);
+  if (pts.length === 0) return `<svg width="${w}" height="${h}" aria-hidden="true"></svg>`;
+  const vs = pts.map((p) => p.v);
+  const max = Math.max(...vs);
+  const min = Math.min(...vs);
+  const span = max - min || 1;
+  const coords = pts.map((p) =>
+    `${(p.i / Math.max(values.length - 1, 1) * w).toFixed(1)},${(h - 2 - (p.v - min) / span * (h - 4)).toFixed(1)}`);
+  return `<svg width="${w}" height="${h}" aria-hidden="true">` +
+    `<polyline points="${coords.join(" ")}" fill="none" stroke="#8C2635" stroke-width="1.5"/></svg>`;
+}
+
+function _rankingRow(r) {
+  const selIdx = state.selected.indexOf(r.cid);
+  const color = selIdx >= 0 ? PALETTE[selIdx % PALETTE.length] : "transparent";
+  const tr = document.createElement("tr");
+  tr.dataset.cid = r.cid;
+  tr.className = selIdx >= 0 ? "sel" : "";
+  tr.style.setProperty("--row-color", color);
+  const mark = selIdx >= 0 ? `<span style="color:${color}" aria-label="выбран">✓</span>` : "";
+  tr.innerHTML =
+    `<td>${r.name} ${mark}</td>` +
+    `<td class="num">${_fmtRu(r.share, 1)}%</td>` +
+    `<td class="num">${_fmtRu(r.count)}</td>` +
+    `<td class="num ${r.deltaFirstSeason > 0 ? "pos" : r.deltaFirstSeason < 0 ? "neg" : ""}">` +
+    `${fmtDelta(r.deltaFirstSeason)}</td>` +
+    `<td>${_sparklineSvg(r.sparkline)}</td><td class="num"></td>`;
+  return tr;
+}
+
+function renderRanking() {
+  const all = getComposerRanking(AGG, state, META);
+  const vm = rankingViewModel(all, {
+    sortKey: state.rankingSortKey,
+    sortDir: state.rankingSortDir,
+    query: state.rankingQuery,
+    limit: state.rankingLimit,
+  });
+  const tbody = $id("ranking-table").querySelector("tbody");
+  tbody.textContent = "";
+  for (const r of vm.rows) tbody.append(_rankingRow(r));
+  const more = $id("ranking-more");
+  more.hidden = vm.rows.length >= vm.total;
+  more.textContent = `Показать ещё 50 (из ${vm.total})`;
+  document.querySelectorAll("#ranking-table th[data-sort]").forEach((th) => {
+    const active = th.dataset.sort === state.rankingSortKey;
+    if (active) {
+      th.setAttribute("aria-sort", state.rankingSortDir === "asc" ? "ascending" : "descending");
+      th.textContent = th.textContent.replace(/ [▲▼]$/, "") +
+        (state.rankingSortDir === "asc" ? " ▲" : " ▼");
+    } else {
+      th.removeAttribute("aria-sort");
+      th.textContent = th.textContent.replace(/ [▲▼]$/, "");
+    }
+  });
+}
+
+function bindRanking() {
+  $id("ranking-table").querySelector("thead").addEventListener("click", (ev) => {
+    const th = ev.target.closest("th[data-sort]");
+    if (!th) return;
+    const key = th.dataset.sort;
+    if (state.rankingSortKey === key) {
+      state.rankingSortDir = state.rankingSortDir === "asc" ? "desc" : "asc";
+    } else {
+      state.rankingSortKey = key;
+      state.rankingSortDir = key === "name" ? "asc" : "desc";
+    }
+    renderAll();
+  });
+  $id("ranking-table").querySelector("tbody").addEventListener("click", (ev) => {
+    const tr = ev.target.closest("tr[data-cid]");
+    if (!tr || ev.target.closest("[data-details]")) return;
+    if (!addSelected(state.selected, tr.dataset.cid)) {
+      showToast("Максимум 6 композиторов");
+    }
+    renderAll();
+  });
+  $id("ranking-search").addEventListener("input", (ev) => {
+    state.rankingQuery = ev.target.value;
+    state.rankingLimit = 50;
+    renderRanking();
+  });
+  $id("ranking-more").addEventListener("click", () => {
+    state.rankingLimit += 50;
+    renderRanking();
+  });
+}
+
 /* ---------- renderTrend: the dominant chart ---------- */
 
 function _trendExtra(i, range, cid, tr) {
@@ -541,17 +663,20 @@ if (typeof module !== "undefined" && module.exports) {
     seasonsInRange, scopeTotals, getComposerRanking, getComposerTrend,
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
     effectiveSelection, addSelected, removeSelected, trendViewModel,
+    rankingViewModel, fmtDelta,
   };
 }
 if (typeof document !== "undefined" && typeof window !== "undefined") {
   window.DashApp = {
     seasonsInRange, scopeTotals, getComposerRanking, getComposerTrend,
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
-    effectiveSelection, addSelected, removeSelected, trendViewModel, init,
+    effectiveSelection, addSelected, removeSelected, trendViewModel,
+    rankingViewModel, fmtDelta, init,
   };
 }
 /* Script tag sits at the end of <body>: DOM exists, safe to register renders. */
 if (typeof document !== "undefined" && typeof window !== "undefined") {
-  RENDERERS.push(renderTrend);
+  RENDERERS.push(renderTrend, renderRanking);
+  bindRanking();
   window.addEventListener("load", init);
 }
