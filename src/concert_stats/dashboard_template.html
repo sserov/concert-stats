@@ -169,6 +169,12 @@
   #drawer table { font-size: 13px; }
   #drawer thead th { padding: 6px 8px; }
   #drawer tbody td { padding: 5px 8px; }
+  #drawer tr.cur td { color: var(--muted); }
+  .cur-badge {
+    display: inline-block; margin-left: 6px; padding: 0 5px;
+    font-size: 10px; color: var(--muted);
+    border: 1px solid var(--grid); border-radius: 2px;
+  }
   .jub-list { margin: 0; padding-left: 18px; color: var(--jub); }
   .concert-list { margin: 0; padding: 0; list-style: none; font-size: 13px; }
   .concert-list li { padding: 5px 0; border-bottom: 1px dotted var(--grid); }
@@ -276,7 +282,7 @@
             <th data-sort="name" scope="col">Композитор</th>
             <th data-sort="share" scope="col" class="num">Доля</th>
             <th data-sort="count" scope="col" class="num">Количество</th>
-            <th data-sort="delta" scope="col" class="num">Δ к первому сезону</th>
+            <th data-sort="deltaFirstSeason" scope="col" class="num">Δ к первому сезону</th>
             <th scope="col">По сезонам</th>
             <th scope="col"><span aria-hidden="true"></span></th>
           </tr>

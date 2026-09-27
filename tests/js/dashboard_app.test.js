@@ -188,3 +188,47 @@ test("getHallComparison uses per-hall denominators", () => {
   assert.ok(Math.abs(hc.philShare - 100 * 7 / 21) < 1e-9);
   assert.ok(Math.abs(hc.consShare - 100 * 5 / 14) < 1e-9);
 });
+
+test("heatmap metric is independent of trend metric", () => {
+  const asShare = S.getHeatmapData(
+    AGG, { ...baseState, metric: "count", heatmapMetric: "share" }, 1, meta);
+  assert.strictEqual(asShare.rows[0].values[0], 30); // bach 2016/17: 3/10
+  const asCount = S.getHeatmapData(
+    AGG, { ...baseState, metric: "share", heatmapMetric: "count" }, 1, meta);
+  assert.strictEqual(asCount.rows[0].values[0], 3);
+});
+
+test("_heatClickRow resolves row from flat or array pointIndex", () => {
+  const rows = [{ cid: "a" }, { cid: "b" }, { cid: "c" }, { cid: "d" }];
+  assert.strictEqual(S._heatClickRow(rows, 3).cid, "d");
+  assert.strictEqual(S._heatClickRow(rows, [3, 5]).cid, "d");
+  assert.strictEqual(S._heatClickRow(rows, "0,3"), null);
+  assert.strictEqual(S._heatClickRow(rows, 99), null);
+  assert.strictEqual(S._heatClickRow(rows, -1), null);
+});
+
+test("rankingViewModel sorts by deltaFirstSeason", () => {
+  const rows = [
+    { cid: "a", name: "A", deltaFirstSeason: 5 },
+    { cid: "b", name: "B", deltaFirstSeason: -2 },
+    { cid: "c", name: "C", deltaFirstSeason: null },
+  ];
+  const vm = S.rankingViewModel(
+    rows, { sortKey: "deltaFirstSeason", sortDir: "desc", query: "", limit: 3 });
+  assert.deepStrictEqual(vm.rows.map((r) => r.cid), ["a", "b", "c"]);
+});
+
+test("selectComposer distinguishes duplicate from cap", () => {
+  const sel = [];
+  assert.strictEqual(S.selectComposer(sel, "a"), "added");
+  assert.strictEqual(S.selectComposer(sel, "a"), "duplicate");
+  assert.deepStrictEqual(sel, ["a"]);
+  for (let i = 0; i < 5; i++) S.selectComposer(sel, "x" + i);
+  assert.strictEqual(S.selectComposer(sel, "z"), "capped");
+  assert.strictEqual(sel.length, 6);
+});
+
+test("seasonTickLabel marks the current season", () => {
+  assert.strictEqual(S.seasonTickLabel("2026/27", AGG), "2026/27 (тек.)");
+  assert.strictEqual(S.seasonTickLabel("2016/17", AGG), "2016/17");
+});

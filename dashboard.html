@@ -169,6 +169,12 @@
   #drawer table { font-size: 13px; }
   #drawer thead th { padding: 6px 8px; }
   #drawer tbody td { padding: 5px 8px; }
+  #drawer tr.cur td { color: var(--muted); }
+  .cur-badge {
+    display: inline-block; margin-left: 6px; padding: 0 5px;
+    font-size: 10px; color: var(--muted);
+    border: 1px solid var(--grid); border-radius: 2px;
+  }
   .jub-list { margin: 0; padding-left: 18px; color: var(--jub); }
   .concert-list { margin: 0; padding: 0; list-style: none; font-size: 13px; }
   .concert-list li { padding: 5px 0; border-bottom: 1px dotted var(--grid); }
@@ -276,7 +282,7 @@
             <th data-sort="name" scope="col">Композитор</th>
             <th data-sort="share" scope="col" class="num">Доля</th>
             <th data-sort="count" scope="col" class="num">Количество</th>
-            <th data-sort="delta" scope="col" class="num">Δ к первому сезону</th>
+            <th data-sort="deltaFirstSeason" scope="col" class="num">Δ к первому сезону</th>
             <th scope="col">По сезонам</th>
             <th scope="col"><span aria-hidden="true"></span></th>
           </tr>
@@ -481,6 +487,7 @@ function getComposerTrend(AGG, state, cids, meta) {
 
 function getHeatmapData(AGG, state, rowLimit, meta) {
   meta = _meta(meta);
+  const metric = state.heatmapMetric || state.metric;
   const ranking = getComposerRanking(AGG, state, meta);
   const top = ranking.slice(0, rowLimit);
   const inTop = new Set(top.map((r) => r.cid));
@@ -492,7 +499,7 @@ function getHeatmapData(AGG, state, rowLimit, meta) {
     name: r.name,
     values: range.map((s) => {
       const n = _composerCount(AGG, r.cid, s, state.hall);
-      if (state.metric === "count") return n;
+      if (metric === "count") return n;
       return n === 0 ? null : _share(n, _hallTotals(AGG, s, state.hall).total);
     }),
   }));
@@ -537,6 +544,24 @@ function jubileeMap(AGG) {
   const map = {};
   for (const j of AGG.jubilees) map[`${j.cid}|${j.season}`] = j.label;
   return map;
+}
+
+/* Axis label marking the incomplete current season (spec §15). */
+function seasonTickLabel(season, agg) {
+  return season === agg.current_season ? `${season} (тек.)` : season;
+}
+
+/* Resolve a heatmap plotly_click to a data row; plotly may pass [x, y]. */
+function _heatClickRow(rows, pointIndex) {
+  const i = Array.isArray(pointIndex) ? pointIndex[0] : pointIndex;
+  if (typeof i !== "number" || !Number.isInteger(i) || i < 0 || i >= rows.length) return null;
+  return rows[i];
+}
+
+/* Selection outcome: "added" | "duplicate" (silent no-op) | "capped" (toast). */
+function selectComposer(sel, cid) {
+  if (sel.includes(cid)) return "duplicate";
+  return addSelected(sel, cid) ? "added" : "capped";
 }
 
 /* Explicit selection, or the top-5 default when nothing is chosen. */
@@ -682,11 +707,9 @@ function acClose() {
 }
 
 function acPick(cid) {
-  if (addSelected(state.selected, cid)) {
-    renderAll();
-  } else if (state.selected.length >= MAX_SELECTED && !state.selected.includes(cid)) {
-    showToast("Максимум 6 композиторов");
-  }
+  const res = selectComposer(state.selected, cid);
+  if (res === "capped") showToast("Максимум 6 композиторов");
+  if (res === "added") renderAll();
   $id("composer-search").value = "";
   acClose();
 }
@@ -786,6 +809,7 @@ function init() {
     seasonTo: AGG.current_season,
     metric: "share",
     selected: [],
+    heatmapMetric: "share",
     heatmapExtra: 15,
     rankingLimit: 50,
     rankingSortKey: "share",
@@ -901,7 +925,7 @@ function bindRanking() {
     }
     const tr = ev.target.closest("tr[data-cid]");
     if (!tr) return;
-    if (!addSelected(state.selected, tr.dataset.cid)) {
+    if (selectComposer(state.selected, tr.dataset.cid) === "capped") {
       showToast("Максимум 6 композиторов");
     }
     renderAll();
@@ -957,7 +981,7 @@ function _trendTraces(vm) {
 
 function _trendLayout(vm) {
   const isShare = state.metric === "share";
-  const ticktext = vm.x.map((s) => (s === AGG.current_season ? `${s} (тек.)` : s));
+  const ticktext = vm.x.map((s) => seasonTickLabel(s, AGG));
   const layout = {
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
@@ -1027,6 +1051,7 @@ const HEAT_SCALE = [[0, "#F7F5F0"], [0.5, "#D9A69B"], [1, "#8C2635"]];
 
 function _heatCells(hm) {
   const range = seasonsInRange(AGG, state);
+  const metric = state.heatmapMetric || state.metric;
   const incomplete = "Сезон продолжается; данные неполные";
   return {
     type: "heatmap",
@@ -1036,13 +1061,13 @@ function _heatCells(hm) {
     zmin: 0,
     hovertemplate:
       "Сезон %{x}<br>%{y}<br>" +
-      (state.metric === "share" ? "%{z:.1f}%" : "%{z} концертов") +
+      (metric === "share" ? "%{z:.1f}%" : "%{z} концертов") +
       "%{customdata}<extra></extra>",
     customdata: hm.rows.map(() => range.map((s) =>
       (s === AGG.current_season ? `<br>${incomplete}` : ""))),
     colorscale: HEAT_SCALE,
     colorbar: {
-      title: { text: state.metric === "share" ? "Доля, %" : "Концертов", side: "top" },
+      title: { text: metric === "share" ? "Доля, %" : "Концертов", side: "top" },
       tickfont: { size: 11 },
     },
     xgap: 2,
@@ -1050,10 +1075,13 @@ function _heatCells(hm) {
   };
 }
 
+let _latestHeatmap = null;
+
 function renderHeatmap() {
   const hm = getHeatmapData(AGG, state, state.heatmapExtra, META);
+  _latestHeatmap = hm;
   const range = seasonsInRange(AGG, state);
-  const ticktext = range.map((s) => (s === AGG.current_season ? `${s} (тек.)` : s));
+  const ticktext = range.map((s) => seasonTickLabel(s, AGG));
   const layout = {
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
@@ -1073,9 +1101,9 @@ function renderHeatmap() {
     if (!div._clickBound) {
       div._clickBound = true;
       div.on("plotly_click", (ev) => {
-        const row = hm.rows[ev.points[0].pointIndex];
-        const cid = row ? row.cid : null;
-        if (cid && typeof openComposerDrawer === "function") openComposerDrawer(cid);
+        const pt = ev.points[0];
+        const row = _heatClickRow(_latestHeatmap ? _latestHeatmap.rows : [], pt && pt.pointIndex);
+        if (row && typeof openComposerDrawer === "function") openComposerDrawer(row.cid);
       });
     }
   });
@@ -1122,11 +1150,13 @@ function renderHallComparison() {
   $id("hall-summary").textContent =
     `Филармония ${_fmtRu(hc.philShare, 1)}% · Консерватория ${_fmtRu(hc.consShare, 1)}%` +
     ` (все концерты композитора: ${_fmtRu(hc.philTotal + hc.consTotal)})`;
+  const incomplete = "Сезон продолжается; данные неполные";
   const line = (name, color, ys) => ({
     type: "scatter", mode: "lines+markers", name, x: hc.seasons, y: ys,
     line: { color, width: 2 }, marker: { size: 7, color: color },
     connectgaps: false,
-    hovertemplate: "Сезон %{x}<br>" + name + ": %{y:.1f}%<extra></extra>",
+    customdata: hc.seasons.map((s) => (s === AGG.current_season ? `<br>${incomplete}` : "")),
+    hovertemplate: "Сезон %{x}<br>" + name + ": %{y:.1f}%%{customdata}<extra></extra>",
   });
   Plotly.newPlot($id("hall-plot"),
     [line("Филармония", "#8C2635", hc.phil), line("Консерватория", "#536B63", hc.cons)],
@@ -1135,7 +1165,11 @@ function renderHallComparison() {
       font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 13 },
       margin: { l: 64, r: 24, t: 16, b: 40 }, showlegend: true,
       legend: { orientation: "h", y: -0.2 },
-      xaxis: { gridcolor: "#DDD9D0" },
+      xaxis: {
+        tickvals: hc.seasons,
+        ticktext: hc.seasons.map((s) => seasonTickLabel(s, AGG)),
+        gridcolor: "#DDD9D0",
+      },
       yaxis: { title: { text: "% концертов зала" }, ticksuffix: "%", gridcolor: "#DDD9D0" },
     },
     { displayModeBar: false, responsive: true });
@@ -1155,7 +1189,10 @@ function _drawerSeasonTable(cid) {
     const cons = _composerCount(AGG, cid, s, "mosconsv");
     const n = _composerCount(AGG, cid, s, state.hall);
     const share = _share(n, _hallTotals(AGG, s, state.hall).total);
-    return `<tr><td>${s}</td><td class="num">${_fmtRu(n)}</td>` +
+    const cur = _isCurrent(AGG, s);
+    const badge = cur ? ' <span class="cur-badge">текущий</span>' : "";
+    return `<tr${cur ? ' class="cur"' : ""}><td>${s}${badge}</td>` +
+      `<td class="num">${_fmtRu(n)}</td>` +
       `<td class="num">${share === null ? "—" : _fmtRu(share, 1) + "%"}</td>` +
       `<td class="num">${mel} / ${cons}</td></tr>`;
   });
@@ -1250,16 +1287,17 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     seasonsInRange, scopeTotals, getComposerRanking, getComposerTrend,
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
-    effectiveSelection, addSelected, removeSelected, trendViewModel,
-    rankingViewModel, fmtDelta,
+    seasonTickLabel, effectiveSelection, addSelected, removeSelected,
+    trendViewModel, rankingViewModel, fmtDelta, _heatClickRow, selectComposer,
   };
 }
 if (typeof document !== "undefined" && typeof window !== "undefined") {
   window.DashApp = {
     seasonsInRange, scopeTotals, getComposerRanking, getComposerTrend,
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
-    effectiveSelection, addSelected, removeSelected, trendViewModel,
-    rankingViewModel, fmtDelta, init,
+    seasonTickLabel, effectiveSelection, addSelected, removeSelected,
+    trendViewModel, rankingViewModel, fmtDelta, _heatClickRow, selectComposer,
+    init,
   };
 }
 /* Script tag sits at the end of <body>: DOM exists, safe to register renders. */

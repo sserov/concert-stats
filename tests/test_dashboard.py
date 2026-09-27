@@ -104,5 +104,6 @@ def test_template_has_redesign_shell():
         "#F7F5F0",
         "Для сравнения сезонов основной показатель — доля концертов",
         "Wayback Machine",
+        'data-sort="deltaFirstSeason"',
     ):
         assert needle in html, needle
