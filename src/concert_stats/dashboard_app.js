@@ -491,7 +491,8 @@ function _rankingRow(r) {
     `<td class="num">${_fmtRu(r.count)}</td>` +
     `<td class="num ${r.deltaFirstSeason > 0 ? "pos" : r.deltaFirstSeason < 0 ? "neg" : ""}">` +
     `${fmtDelta(r.deltaFirstSeason)}</td>` +
-    `<td>${_sparklineSvg(r.sparkline)}</td><td class="num"></td>`;
+    `<td>${_sparklineSvg(r.sparkline)}</td>` +
+    `<td class="num"><button data-details="${r.cid}" aria-label="Карточка: ${r.name}">детали ↗</button></td>`;
   return tr;
 }
 
@@ -536,8 +537,13 @@ function bindRanking() {
     renderAll();
   });
   $id("ranking-table").querySelector("tbody").addEventListener("click", (ev) => {
+    const det = ev.target.closest("[data-details]");
+    if (det) {
+      openComposerDrawer(det.dataset.details);
+      return;
+    }
     const tr = ev.target.closest("tr[data-cid]");
-    if (!tr || ev.target.closest("[data-details]")) return;
+    if (!tr) return;
     if (!addSelected(state.selected, tr.dataset.cid)) {
       showToast("Максимум 6 композиторов");
     }
@@ -733,6 +739,121 @@ function bindHeatmap() {
   });
 }
 
+/* ---------- renderHallComparison + composer drawer ---------- */
+
+function _hallCidDefault() {
+  if (state.hallCid && _composerScopeTotal(AGG, state.hallCid, state) > 0) return state.hallCid;
+  if (state.selected.length > 0) return state.selected[0];
+  const top = getComposerRanking(AGG, state, META)[0];
+  return top ? top.cid : null;
+}
+
+function renderHallComparison() {
+  const cid = _hallCidDefault();
+  const sel = $id("hall-cid");
+  const ranking = getComposerRanking(AGG, state, META);
+  sel.textContent = "";
+  for (const r of ranking) {
+    const o = document.createElement("option");
+    o.value = r.cid;
+    o.textContent = r.name;
+    sel.append(o);
+  }
+  if (!cid) return;
+  sel.value = cid;
+  const hc = getHallComparison(AGG, state, cid, META);
+  $id("hall-summary").textContent =
+    `Филармония ${_fmtRu(hc.philShare, 1)}% · Консерватория ${_fmtRu(hc.consShare, 1)}%` +
+    ` (все концерты композитора: ${_fmtRu(hc.philTotal + hc.consTotal)})`;
+  const line = (name, color, ys) => ({
+    type: "scatter", mode: "lines+markers", name, x: hc.seasons, y: ys,
+    line: { color, width: 2 }, marker: { size: 7, color: color },
+    connectgaps: false,
+    hovertemplate: "Сезон %{x}<br>" + name + ": %{y:.1f}%<extra></extra>",
+  });
+  Plotly.newPlot($id("hall-plot"),
+    [line("Филармония", "#8C2635", hc.phil), line("Консерватория", "#536B63", hc.cons)],
+    {
+      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 13 },
+      margin: { l: 64, r: 24, t: 16, b: 40 }, showlegend: true,
+      legend: { orientation: "h", y: -0.2 },
+      xaxis: { gridcolor: "#DDD9D0" },
+      yaxis: { title: { text: "% концертов зала" }, ticksuffix: "%", gridcolor: "#DDD9D0" },
+    },
+    { displayModeBar: false, responsive: true });
+}
+
+let drawerTrigger = null;
+
+function _drawerConcerts(cid) {
+  const all = (window.DATASET && window.DATASET.concerts) || [];
+  return all.filter((c) => c.composers.includes(cid)).slice(-20).reverse();
+}
+
+function _drawerSeasonTable(cid) {
+  const range = seasonsInRange(AGG, state);
+  const rows = range.map((s) => {
+    const mel = _composerCount(AGG, cid, s, "meloman");
+    const cons = _composerCount(AGG, cid, s, "mosconsv");
+    const n = _composerCount(AGG, cid, s, state.hall);
+    const share = _share(n, _hallTotals(AGG, s, state.hall).total);
+    return `<tr><td>${s}</td><td class="num">${_fmtRu(n)}</td>` +
+      `<td class="num">${share === null ? "—" : _fmtRu(share, 1) + "%"}</td>` +
+      `<td class="num">${mel} / ${cons}</td></tr>`;
+  });
+  return `<table><thead><tr><th>Сезон</th><th class="num">Концертов</th>` +
+    `<th class="num">Доля</th><th class="num">Фил. / Конс.</th></tr></thead>` +
+    `<tbody>${rows.join("")}</tbody></table>`;
+}
+
+function openComposerDrawer(cid) {
+  const drawer = $id("drawer");
+  const comp = META.composers[cid] || {};
+  const years = comp.born ? `${comp.born}–${comp.died || "…"}` : "";
+  const total = _composerScopeTotal(AGG, cid, state);
+  const share = _share(total, scopeTotals(AGG, state).total);
+  const jubs = AGG.jubilees.filter((j) => j.cid === cid).map((j) =>
+    `<li>${j.season} — ${j.label}</li>`).join("");
+  const concerts = _drawerConcerts(cid).map((c) =>
+    `<li><span class="c-date">${c.date}</span>${c.title} <span class="c-date">· ${c.hall}</span></li>`).join("");
+  $id("drawer-body").innerHTML =
+    `<h3>${_name(META, cid)}</h3><p class="drawer-sub">${years}</p>` +
+    `<div class="drawer-kpis">` +
+    `<div><div class="kpi-num">${_fmtRu(total)}</div><div class="kpi-cap">концертов в выборке</div></div>` +
+    `<div><div class="kpi-num">${share === null ? "—" : _fmtRu(share, 1) + "%"}</div><div class="kpi-cap">доля диапазона</div></div>` +
+    `</div>` +
+    (jubs ? `<h4>Юбилеи</h4><ul class="jub-list">${jubs}</ul>` : "") +
+    `<h4>По сезонам</h4>${_drawerSeasonTable(cid)}` +
+    `<h4>Последние концерты</h4>` +
+    (concerts ? `<ul class="concert-list">${concerts}</ul>` : "<p class='drawer-sub'>Нет данных</p>");
+  drawer.classList.add("open");
+  $id("drawer-bg").hidden = false;
+  drawerTrigger = document.activeElement;
+  drawer.querySelector("[data-close]").focus();
+}
+
+function closeComposerDrawer() {
+  $id("drawer").classList.remove("open");
+  $id("drawer-bg").hidden = true;
+  if (drawerTrigger && drawerTrigger.focus) drawerTrigger.focus();
+  drawerTrigger = null;
+}
+
+function bindHallAndDrawer() {
+  $id("hall-cid").addEventListener("change", (ev) => {
+    state.hallCid = ev.target.value;
+    renderHallComparison();
+  });
+  $id("drawer-bg").addEventListener("click", closeComposerDrawer);
+  $id("drawer").querySelector("[data-close]").addEventListener("click", closeComposerDrawer);
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && $id("drawer").classList.contains("open")) {
+      closeComposerDrawer();
+    }
+  });
+}
+
 /* ---------- node:test exports (no DOM at module scope) ---------- */
 
 if (typeof module !== "undefined" && module.exports) {
@@ -753,8 +874,9 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
 }
 /* Script tag sits at the end of <body>: DOM exists, safe to register renders. */
 if (typeof document !== "undefined" && typeof window !== "undefined") {
-  RENDERERS.push(renderTrend, renderRanking, renderHeatmap);
+  RENDERERS.push(renderTrend, renderRanking, renderHeatmap, renderHallComparison);
   bindRanking();
   bindHeatmap();
+  bindHallAndDrawer();
   window.addEventListener("load", init);
 }
