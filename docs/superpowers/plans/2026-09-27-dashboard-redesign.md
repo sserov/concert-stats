@@ -529,7 +529,7 @@ section#coverage          #coverage-plot, .cov-note
 #about (dialog)           methodology text
 ```
 
-CSS-токены (в `:root`): `--bg:#F7F5F0; --text:#22211F; --muted:#77736B; --grid:#DDD9D0; --phil:#8C2635; --cons:#536B63; --jub:#A77A2B`. Serif (`Georgia, 'Times New Roman', serif`) только для `h1`, заголовков секций; UI/данные — system sans (`-apple-system, 'Segoe UI', Roboto, sans-serif`). Layout: `.wrap{max-width:1440px;margin:0 auto;padding:32px 48px}`; `#trend .plot` высота ~560px, вторичные ~320–380px; секции разделены whitespace + тонкий `border-top:1px solid var(--grid)` c заголовком-надписью, НЕ карточки с рамками. Breakpoints 1200/900/600: одна колонка ниже 900, `.controls` sticky `top:0` c `background:var(--bg)`; `#heatmap-plot-wrap{overflow-x:auto}` всегда; focus-visible: `outline:2px solid var(--jub); outline-offset:2px`; touch targets `min-height:40px` у всех кнопок/опций.
+CSS-токены (в `:root`): `--bg:#F7F5F0; --text:#22211F; --muted:#77736B; --grid:#DDD9D0; --phil:#8C2635; --cons:#536B63; --jub:#A77A2B`. Serif (`Georgia, 'Times New Roman', serif`) только для `h1`, заголовков секций; UI/данные — system sans (`-apple-system, 'Segoe UI', Roboto, sans-serif`). Layout: `.wrap{max-width:1440px;margin:0 auto;padding:32px 48px}`; `#trend .plot` высота ~560px, вторичные ~320–380px; секции разделены whitespace + тонкий `border-top:1px solid var(--grid)` c заголовком-надписью, НЕ карточки с рамками. Desktop only (мобильная версия исключена из объёма, решение 2026-09-27): один breakpoint ~1200 для сжатия паддингов, `.controls` sticky `top:0` c `background:var(--bg)`; `#heatmap-plot-wrap{overflow-x:auto}`; focus-visible: `outline:2px solid var(--jub); outline-offset:2px`; кликабельные цели `min-height:40px`. Чартам `responsive:true`.
 
 Тексты: header по ТЗ §3; method-note и «О проекте» — текст из ТЗ §11 дословно.
 
@@ -681,7 +681,7 @@ test("removeSelected toggles off", () => {
 **Drawer:**
 - Открытие: клик строки ranking (с `Shift`? — NO: обычный клик добавляет в selection; открытие drawer — отдельная кнопка-стрелка в конце строки «детали ↗», плюс клик по линии/точке trend и по heatmap ячейке (plotly_click), плюс выбор в `#hall-cid` не открывает).
 - Содержимое: имя + годы жизни (`1840–1893`); KPI: всего концертов (total, per hall), доля; mini trend (Plotly, share, две линии залов); юбилейные отметки списком; таблица по сезонам (сезон, концертов, доля, залы); последние 20 концертов (дата, зал, название) из slim DATASET (`DATASET.concerts.filter(c=>c.composers.includes(cid)).slice(-20).reverse()`).
-- `aside#drawer` fixed right 0, width 420px, transform translateX(100%) → 0, `role="dialog" aria-modal="true" aria-label="Карточка композитора"`, фокус в drawer, Esc/backdrop/`[data-close]` закрывают, фокус возвращается на триггер. Mobile (<600): width 100%.
+- `aside#drawer` fixed right 0, width 420px, transform translateX(100%) → 0, `role="dialog" aria-modal="true" aria-label="Карточка композитора"`, фокус в drawer, Esc/backdrop/`[data-close]` закрывают, фокус возвращается на триггер.
 - Никаких перезагрузок; на plotly_click по trend линии — `openComposerDrawer(cid)` (cid из trace meta).
 
 - [ ] **Step 1: Failing test**: `getHallComparison` — philShare/consShare по фикстуре; phil values используют meloman делители. Step 2: FAIL. Step 3: implement оба рендера + drawer. Step 4: pass + build. Step 5: Commit `feat: hall comparison chart and composer detail drawer`.
@@ -704,7 +704,42 @@ test("removeSelected toggles off", () => {
 
 - [ ] **Step 1: implement** (render-тесты не нужны — тонкий конфиг; структурный assert что `renderCoverage` в RENDERERS — тривиально, пропускаем по YAGNI, проверка ручная).
 - [ ] **Step 2: Полная сборка**: `uv run pytest -q && uv run ruff check src tests && uv run ruff format --check src tests && uv run python -m concert_stats.build_dashboard`.
-- [ ] **Step 3: Ручной QA-чеклист** (все пункты ТЗ §21):
+- [ ] **Step 3: Data QA cross-check** (Stage 4 из CLAUDE.md) — тест на реальном dataset.json:
+
+```python
+def test_aggregates_match_raw_dataset():
+    """AGGREGATES must reproduce base numbers from raw dataset (Stage 4 gate)."""
+    import json
+    from collections import Counter
+    from concert_stats.aggregates import compute_aggregates
+    ds = json.loads(Path("data/dataset.json").read_text(encoding="utf-8"))
+    agg = compute_aggregates(ds)
+    assert sum(st["total"] for st in agg["season_totals"].values()) == len(ds["concerts"])
+    raw_top = Counter(cid for c in ds["concerts"] for cid in c["composers"]).most_common(5)
+    for cid, n in raw_top:
+        assert agg["composer_totals"][cid]["total"] == n
+    for row in agg["coverage_by_season"]:
+        st = agg["season_totals"][row["season"]]
+        assert row["meloman"] == st["meloman"]["total"] and row["mosconsv"] == st["mosconsv"]["total"]
+```
+
+(в `tests/test_aggregates.py`, пометить `@pytest.mark.skipif(not Path("data/dataset.json").exists(), ...)`. Это Stage 4 data-QA из CLAUDE.md.)
+
+- [ ] **Step 4: Visual QA loop** (Stage 3 из CLAUDE.md) — headless Chrome:
+
+```bash
+cp dashboard.html /tmp/dash_preview.html   # обход TCC: Chrome headless не читает ~/Documents
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu \
+  --screenshot=/tmp/dash_desktop.png --window-size=1440,900 --hide-scrollbars \
+  --virtual-time-budget=30000 "file:///tmp/dash_preview.html"
+```
+
+Проверить по скриншоту + dump-dom (счётчик `<svg` > 0 и отсутствие JSERR): иерархия,
+читаемость, плотность, отступы; при проблемах — фикс и повтор. Скриншоты хранить в
+`docs/screens/after/`. Помнить урок аудита: биндинги plotly_* событий — только
+после первого рендера плота, иначе TypeError валит весь redraw.
+
+- [ ] **Step 5: Ручной QA-чеклист** (все пункты ТЗ §21):
   - загрузка: заголовок и доминирующий trend видны сразу, без layout shift;
   - смена зала/диапазона/метрики обновляет ВСЕ секции;
   - выбор композитора (ranking click, autocomplete, heatmap click) отражается в чипах+trend+heatmap+hall comparison;
@@ -714,9 +749,9 @@ test("removeSelected toggles off", () => {
   - heatmap: топ-15, «Показать ещё», выбранные вне топа присутствуют;
   - 2026/27 помечен везде, tooltip неполноты есть;
   - coverage-пояснения видны ДО просмотра абсолютных количеств;
-  - Safari + Chrome desktop 1440px и 375px (mobile): без горизонтального скролла страницы (heatmap скроллится внутри), drawer full-screen, sticky controls;
+  - Chrome desktop 1440×900: без горизонтального скролла страницы (heatmap скроллится внутри), sticky controls;
   - file:// открытие работает (Plotly с CDN при интернете).
-- [ ] **Step 4: Commit** `feat: coverage section, about dialog, accessibility pass, final build`.
+- [ ] **Step 6: Commit** `feat: coverage section, about dialog, accessibility pass, final build`.
 
 ```bash
 git add -A
