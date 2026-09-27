@@ -25,7 +25,7 @@ def _dedupe_key(rec: dict) -> tuple:
     return (rec["source"], rec["date"], _norm_title(rec["title"]))
 
 
-def build(concerts: list[dict]) -> dict:
+def build(concerts: list[dict], date_from: str = "2016-01-01", date_to: str = "2099-12-31") -> dict:
     seen: set[tuple] = set()
     out: list[dict] = []
     unknown_counter: Counter[str] = Counter()
@@ -34,7 +34,7 @@ def build(concerts: list[dict]) -> dict:
         if key in seen:
             continue
         seen.add(key)
-        if not rec["date"]:
+        if not rec["date"] or not (date_from <= rec["date"] <= date_to):
             continue
         text = " ".join([rec["title"], rec["program_text"], *rec["structured_composers"]])
         cids = match_composers(text)
