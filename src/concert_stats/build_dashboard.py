@@ -1,4 +1,4 @@
-"""Render dashboard.html from dataset.json and precomputed aggregates."""
+"""Render docs/index.html (GitHub Pages) from dataset.json and precomputed aggregates."""
 
 import json
 from importlib import resources
@@ -31,9 +31,9 @@ def main() -> None:
     pkg = resources.files("concert_stats")
     template = pkg.joinpath("dashboard_template.html").read_text(encoding="utf-8")
     app_js = pkg.joinpath("dashboard_app.js").read_text(encoding="utf-8")
-    out = Path("dashboard.html")
+    out = Path("docs/index.html")
     out.write_text(render(template, ds, agg, app_js), encoding="utf-8")
-    print(f"dashboard.html written ({out.stat().st_size // 1024} KB)")
+    print(f"docs/index.html written ({out.stat().st_size // 1024} KB)")
 
 
 if __name__ == "__main__":

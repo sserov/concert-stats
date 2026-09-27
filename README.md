@@ -11,7 +11,7 @@
     uv run python -m concert_stats.scrape_meloman
     uv run python -m concert_stats.build_dataset
     uv run python -m concert_stats.build_dashboard
-    open dashboard.html
+    open docs/index.html
 
 Скрапинг возобновляемый: сырые ответы кэшируются в `data/raw/`, повторный запуск
 докачивает только недостающее. Инкрементальное обновление — теми же командами с
@@ -24,4 +24,4 @@
 - `data/*/events.jsonl` — события по источникам.
 - `data/dataset.json` — объединённый датасет с композиторами и сезонами.
 - `data/review_unknown.txt` — кандидаты на пополнение словаря композиторов.
-- `dashboard.html` — дашборд (самодостаточный файл).
+- `docs/index.html` — дашборд (самодостаточный файл, GitHub Pages).
