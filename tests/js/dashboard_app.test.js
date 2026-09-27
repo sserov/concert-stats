@@ -73,3 +73,33 @@ test("scopeTotals respects hall", () => {
   const t = S.scopeTotals(AGG, { ...baseState, hall: "mosconsv" });
   assert.strictEqual(t.total, 14);
 });
+
+test("selection capped at 6 with flag", () => {
+  const sel = [];
+  const a1 = S.addSelected(sel, "a"); const a2 = S.addSelected(sel, "b");
+  ["c", "d", "e", "f"].forEach((c) => S.addSelected(sel, c));
+  const a7 = S.addSelected(sel, "g");
+  assert.strictEqual(sel.length, 6);
+  assert.strictEqual(a7, false); // отклонён
+  assert.strictEqual(a1 && a2, true);
+});
+
+test("addSelected ignores duplicates", () => {
+  const sel = ["a"];
+  assert.strictEqual(S.addSelected(sel, "a"), false);
+  assert.deepStrictEqual(sel, ["a"]);
+});
+
+test("removeSelected toggles off", () => {
+  const sel = ["a", "b"];
+  S.removeSelected(sel, "a");
+  assert.deepStrictEqual(sel, ["b"]);
+});
+
+test("effectiveSelection defaults to top-5 without mutating state", () => {
+  const st = { ...baseState, selected: [] };
+  assert.deepStrictEqual(S.effectiveSelection(AGG, st, meta), ["bach", "mozart"]);
+  assert.deepStrictEqual(st.selected, []);
+  assert.deepStrictEqual(
+    S.effectiveSelection(AGG, { ...baseState, selected: ["mozart"] }, meta), ["mozart"]);
+});
