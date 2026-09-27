@@ -30,18 +30,20 @@ AND pytest/ruff/build pass AND aggregates match raw dataset numbers.
 - [x] Task 7: renderRanking — table
 - [x] Task 8: renderHeatmap
 - [x] Task 9: Hall comparison + composer drawer
-- [ ] Task 10: Coverage, About, a11y pass, final build
+- [x] Task 10: Coverage, About, a11y pass, final build
 
 ## Stage 3 — Visual QA loop
 
-- [ ] 1440×900: hierarchy, readability, spacing, chart density, interactions OK
-- [ ] Screenshots verified against spec §21 checklist
+- [x] 1440×900: hierarchy, readability, spacing, chart density, interactions OK
+- [x] Screenshots verified against spec §21 checklist
+      (`docs/screens/after/desktop-1440-top.png`, `desktop-1440-full.png`,
+      `desktop-1440-drawer.png`; interaction QA via injected DOM script:
+      selection cap 6 + toast, drawer open/Esc, metric/hall/season sync — all pass)
 
 ## Stage 4 — Data QA
 
-- [ ] `uv run pytest -q` green (incl. node selector tests)
-- [ ] `uv run ruff check` / `ruff format --check` clean
-- [ ] `uv run python -m concert_stats.build_dashboard` succeeds
-- [ ] Aggregates cross-check: season_totals totals == len(concerts in range);
-      composer_totals top-5 == direct recount from raw concerts;
-      coverage_by_season sums == per-source counts
+- [x] `uv run pytest -q` green (incl. node selector tests) — 50 passed
+- [x] `uv run ruff check` / `ruff format --check` clean
+- [x] `uv run python -m concert_stats.build_dashboard` succeeds
+- [x] Aggregates cross-check: `test_aggregates_match_raw_dataset` passes
+      on real `data/dataset.json`
