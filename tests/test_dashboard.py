@@ -1,4 +1,5 @@
 import json
+from importlib import resources
 
 from concert_stats.build_dashboard import render, slim_concerts
 
@@ -78,3 +79,30 @@ def test_render_inlines_aggregates():
     agg = {"seasons": ["2024/25"], "current_season": "2024/25"}
     out = render("window.AGGREGATES = __AGGREGATES__;", _ds(), agg, "")
     assert '"current_season"' in out and "__AGGREGATES__" not in out
+
+
+def test_template_has_redesign_shell():
+    html = (resources.files("concert_stats") / "dashboard_template.html").read_text("utf-8")
+    for needle in (
+        "Музыкальный репертуар Москвы",
+        "сезоны 2016/17—2026/27",
+        'id="hall-seg"',
+        'id="season-from"',
+        'id="season-to"',
+        'id="composer-search"',
+        'id="chips"',
+        'id="trend-plot"',
+        'id="ranking-table"',
+        'id="heatmap-plot-wrap"',
+        'id="hall-plot"',
+        'id="coverage-plot"',
+        'id="drawer"',
+        'id="about"',
+        "#8C2635",
+        "#536B63",
+        "#A77A2B",
+        "#F7F5F0",
+        "Для сравнения сезонов основной показатель — доля концертов",
+        "Wayback Machine",
+    ):
+        assert needle in html, needle

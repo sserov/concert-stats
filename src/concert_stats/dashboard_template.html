@@ -2,180 +2,359 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<title>Композиторы: Филармония и Консерватория, 2016–2026</title>
+<meta name="viewport" content="width=1440">
+<title>Музыкальный репертуар Москвы — сезоны 2016/17—2026/27</title>
 <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
 <style>
-  :root { --ink:#1f2430; --muted:#6b7280; --bg:#fafaf8; --card:#ffffff; --line:#e5e7eb; }
-  body { font-family: Georgia, 'Times New Roman', serif; background:var(--bg); color:var(--ink);
-         margin:0; padding:24px; }
-  h1 { font-size:26px; font-weight:normal; margin:0 0 4px; }
-  .sub { color:var(--muted); font-size:14px; margin-bottom:20px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:1400px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px; }
-  .card h2 { font-size:16px; font-weight:normal; margin:0 0 10px; border-bottom:1px solid var(--line);
-             padding-bottom:6px; }
-  .controls { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; font-family:sans-serif; font-size:13px; }
-  select, input { font:inherit; padding:4px 6px; }
-  #trend { grid-column:1 / -1; }
-  table { border-collapse:collapse; width:100%; font-size:13px; font-family:sans-serif; }
-  th, td { text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); }
-  tr.sel td { background:#eef3ff; }
-  .note { color:var(--muted); font-size:12px; margin-top:8px; }
+  :root {
+    --bg: #F7F5F0;
+    --text: #22211F;
+    --muted: #77736B;
+    --grid: #DDD9D0;
+    --phil: #8C2635;
+    --cons: #536B63;
+    --jub: #A77A2B;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 32px 48px; }
+  h1, h2 { font-family: var(--serif); font-weight: normal; }
+  h1 { font-size: 40px; line-height: 1.15; margin: 0; }
+  h2 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 8px 0 0; }
+  .desc { font-family: var(--serif); font-size: 18px; font-style: italic;
+          color: var(--text); margin: 14px 0 0; max-width: 60ch; }
+  .site-head { position: relative; padding-top: 12px; }
+  #about-open {
+    position: absolute; top: 40px; right: 48px; min-height: 40px;
+    padding: 8px 14px; font: inherit; color: var(--muted);
+    background: none; border: 1px solid var(--grid); border-radius: 3px; cursor: pointer;
+  }
+  #about-open:hover { color: var(--text); border-color: var(--muted); }
+
+  /* ---------- controls ---------- */
+  .controls {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--grid);
+    margin-top: 28px;
+  }
+  .controls .wrap { padding-top: 12px; padding-bottom: 12px;
+    display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+  #hall-seg { display: inline-flex; border: 1px solid var(--grid); border-radius: 3px; }
+  .seg-btn {
+    min-height: 40px; padding: 8px 16px; font: inherit; font-size: 14px;
+    background: none; border: none; border-right: 1px solid var(--grid);
+    color: var(--muted); cursor: pointer;
+  }
+  .seg-btn:last-child { border-right: none; }
+  .seg-btn:hover { color: var(--text); }
+  .seg-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+  .ctl-label { color: var(--muted); font-size: 14px; }
+  select, input[type="search"] {
+    font: inherit; font-size: 14px; color: var(--text);
+    background: none; border: 1px solid var(--grid); border-radius: 3px;
+    min-height: 40px; padding: 8px 10px;
+  }
+  select:hover, input:hover { border-color: var(--muted); }
+  .search { position: relative; }
+  #composer-search { width: 260px; }
+  #search-ac {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 30;
+    margin: 4px 0 0; padding: 0; list-style: none;
+    background: var(--bg); border: 1px solid var(--grid); border-radius: 3px;
+    max-height: 320px; overflow-y: auto;
+    box-shadow: 0 6px 18px rgba(34, 33, 31, 0.08);
+  }
+  #search-ac li {
+    min-height: 40px; display: flex; align-items: center;
+    padding: 8px 12px; cursor: pointer;
+  }
+  #search-ac li:hover, #search-ac li[aria-selected="true"] { background: rgba(167, 122, 43, 0.12); }
+  #chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: 40px; padding: 6px 12px; font-size: 14px;
+    border: 1px solid var(--grid); border-radius: 16px; background: none;
+    cursor: pointer; color: var(--text);
+  }
+  .chip .chip-swatch { width: 9px; height: 9px; border-radius: 50%; }
+  .chip .chip-x { color: var(--muted); }
+  .chip:hover .chip-x { color: var(--text); }
+
+  /* ---------- KPI ---------- */
+  #kpi .wrap { display: flex; gap: 64px; padding-top: 28px; padding-bottom: 8px; }
+  .kpi-item .kpi-num { font-size: 32px; line-height: 1.2; }
+  .kpi-item .kpi-cap { color: var(--muted); font-size: 13px; }
+
+  /* ---------- sections ---------- */
+  section { border-top: 1px solid var(--grid); margin-top: 40px; }
+  section > .wrap, section > * { clear: both; }
+  section .wrap { padding-top: 32px; padding-bottom: 8px; }
+  .sec-head { display: flex; align-items: baseline; gap: 24px; flex-wrap: wrap;
+              margin-bottom: 18px; }
+  .sec-head p { color: var(--muted); font-size: 14px; margin: 0; }
+  #trend-plot { height: 560px; }
+  .method-note {
+    color: var(--muted); font-size: 13px; max-width: 80ch;
+    margin: 12px 0 0; padding-top: 8px; border-top: 1px dotted var(--grid);
+  }
+  #trend-summary { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .plot { width: 100%; }
+  #hall-plot, #coverage-plot { height: 340px; }
+
+  /* ---------- ranking table ---------- */
+  #ranking-search { width: 260px; margin-bottom: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  thead th {
+    font-weight: normal; color: var(--muted); text-align: left;
+    border-bottom: 1px solid var(--muted); padding: 10px 12px;
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--text); }
+  thead th[aria-sort] { color: var(--text); }
+  tbody td { border-bottom: 1px solid var(--grid); padding: 9px 12px; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: rgba(167, 122, 43, 0.07); }
+  tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--row-color, var(--phil)); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pos { color: var(--cons); }
+  .neg { color: var(--phil); }
+  .more-btn {
+    margin-top: 14px; min-height: 40px; padding: 8px 18px; font: inherit;
+    font-size: 14px; color: var(--text); background: none;
+    border: 1px solid var(--grid); border-radius: 3px; cursor: pointer;
+  }
+  .more-btn:hover { border-color: var(--muted); }
+
+  /* ---------- heatmap ---------- */
+  #heatmap-plot-wrap { overflow-x: auto; }
+  #heatmap-plot { height: 480px; min-width: 760px; }
+
+  /* ---------- drawer ---------- */
+  #drawer-bg {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(34, 33, 31, 0.35);
+  }
+  #drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 50;
+    width: 420px; max-width: 90vw;
+    background: var(--bg); border-left: 1px solid var(--grid);
+    transform: translateX(100%); transition: transform 0.25s ease;
+    overflow-y: auto; padding: 24px 28px;
+  }
+  #drawer.open { transform: translateX(0); }
+  #drawer [data-close] {
+    float: right; min-height: 40px; min-width: 40px; font-size: 18px;
+    background: none; border: none; color: var(--muted); cursor: pointer;
+  }
+  #drawer [data-close]:hover { color: var(--text); }
+  #drawer h3 { font-family: var(--serif); font-weight: normal; font-size: 24px; margin: 0 0 4px; }
+  #drawer .drawer-sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  .drawer-kpis { display: flex; gap: 28px; margin: 0 0 18px; }
+  .drawer-kpis .kpi-num { font-size: 22px; }
+  .drawer-kpis .kpi-cap { font-size: 12px; }
+  #drawer h4 { font-size: 13px; font-weight: normal; color: var(--muted);
+               text-transform: uppercase; letter-spacing: 0.06em; margin: 20px 0 8px; }
+  #drawer table { font-size: 13px; }
+  #drawer thead th { padding: 6px 8px; }
+  #drawer tbody td { padding: 5px 8px; }
+  .jub-list { margin: 0; padding-left: 18px; color: var(--jub); }
+  .concert-list { margin: 0; padding: 0; list-style: none; font-size: 13px; }
+  .concert-list li { padding: 5px 0; border-bottom: 1px dotted var(--grid); }
+  .concert-list .c-date { color: var(--muted); margin-right: 8px; }
+
+  /* ---------- about / toast ---------- */
+  dialog {
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--grid); border-radius: 3px;
+    max-width: 640px; padding: 32px 36px;
+  }
+  dialog::backdrop { background: rgba(34, 33, 31, 0.35); }
+  dialog h2 { font-size: 24px; margin-top: 0; }
+  dialog .method-note { border-top: none; padding-top: 0; font-size: 14px; }
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 60; padding: 10px 18px; font-size: 14px;
+    background: var(--text); color: var(--bg); border-radius: 3px;
+  }
+  .noscript { color: var(--phil); padding: 16px 48px; }
+
+  /* ---------- a11y ---------- */
+  :focus-visible { outline: 2px solid var(--jub); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    #drawer { transition: none; }
+    html { scroll-behavior: auto; }
+  }
+  @media (max-width: 1200px) {
+    .wrap { padding: 24px 28px; }
+    #about-open { right: 28px; }
+    #kpi .wrap { gap: 36px; }
+  }
 </style>
 </head>
 <body>
-<h1>Композиторы в двух залах: кто в тренде</h1>
-<div class="sub">Московская филармония (meloman.ru) и консерватория (mosconsv.ru), сезоны 2016/17–2025/26.
-Концерты без распознанных композиторов: <span id="q"></span>%</div>
+
+<header class="site-head">
+  <div class="wrap">
+    <h1>Музыкальный репертуар Москвы</h1>
+    <p class="sub">Московская филармония · Московская консерватория · сезоны 2016/17—2026/27</p>
+    <p class="desc">Как менялась программа двух московских концертных площадок за последнее десятилетие</p>
+    <button id="about-open" aria-haspopup="dialog">О проекте</button>
+  </div>
+</header>
+
 <div class="controls">
-  <label>Зал <select id="f-venue">
-    <option value="all">оба</option>
-    <option value="meloman">филармония</option>
-    <option value="mosconsv">консерватория</option>
-  </select></label>
-  <label>Сезон <select id="f-season"><option value="all">все</option></select></label>
-  <label>Поиск <input id="f-search" placeholder="композитор"></label>
-  <button id="clear">сбросить выбор</button>
+  <div class="wrap">
+    <div id="hall-seg" role="group" aria-label="Зал">
+      <button class="seg-btn" data-hall="all" aria-pressed="true">Оба</button>
+      <button class="seg-btn" data-hall="meloman" aria-pressed="false">Московская филармония</button>
+      <button class="seg-btn" data-hall="mosconsv" aria-pressed="false">Московская консерватория</button>
+    </div>
+    <span class="ctl-label">Сезоны
+      <select id="season-from" aria-label="Сезон от"></select> —
+      <select id="season-to" aria-label="Сезон до"></select>
+    </span>
+    <div class="search">
+      <input id="composer-search" type="search" placeholder="Композитор…"
+             role="combobox" aria-expanded="false" aria-controls="search-ac"
+             aria-autocomplete="list" autocomplete="off">
+      <ul id="search-ac" role="listbox" aria-label="Найденные композиторы" hidden></ul>
+    </div>
+    <div id="chips" aria-label="Выбранные композиторы"></div>
+  </div>
 </div>
-<div class="grid">
-  <div class="card"><h2>Топ композиторов (концерты)</h2><div id="top"></div></div>
-  <div class="card"><h2>Композитор × сезон</h2><div id="heatmap"></div></div>
-  <div class="card" id="trend"><h2>Доля сезонов с композитором, % — тренды и юбилеи</h2><div id="trendplot"></div>
-    <div class="note">Пунктир — юбилейный год (50/100-летие от даты рождения или смерти).</div></div>
-  <div class="card"><h2>Покрытие данных по годам</h2><div id="coverage"></div>
-    <div class="note">Провалы: ковид 2020–21; филармония до 2019 — частичный захват Wayback.</div></div>
+
+<div id="kpi">
+  <div class="wrap">
+    <div class="kpi-item"><div class="kpi-num" id="kpi-concerts">—</div><div class="kpi-cap">концертов в выборке</div></div>
+    <div class="kpi-item"><div class="kpi-num" id="kpi-composers">—</div><div class="kpi-cap">композиторов звучало</div></div>
+    <div class="kpi-item"><div class="kpi-num" id="kpi-coverage">—</div><div class="kpi-cap">программ распознано</div></div>
+    <div class="kpi-item"><div class="kpi-num" id="kpi-unknown">—</div><div class="kpi-cap">концертов без композитора</div></div>
+  </div>
 </div>
+
+<main>
+  <section id="trend">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Как меняется популярность композиторов</h2>
+        <div id="metric-seg" role="group" aria-label="Метрика">
+          <button class="seg-btn" data-metric="share" aria-pressed="true">Доля</button>
+          <button class="seg-btn" data-metric="count" aria-pressed="false">Количество</button>
+        </div>
+      </div>
+      <div id="trend-plot" class="plot" role="img"
+           aria-label="Линейный график доли концертов по сезонам для выбранных композиторов"></div>
+      <p id="trend-summary"></p>
+      <p class="method-note">Для сравнения сезонов основной показатель — доля концертов, а не абсолютное
+        количество. Охват источников различается по годам; данные Московской филармонии до 2019 года
+        частично восстановлены через Wayback Machine.</p>
+    </div>
+  </section>
+
+  <section id="ranking">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Кто звучит чаще всего</h2>
+        <p>Клик по строке добавляет композитора в график наверху</p>
+      </div>
+      <input id="ranking-search" type="search" placeholder="Фильтр по имени…" aria-label="Фильтр таблицы по имени">
+      <table id="ranking-table">
+        <thead>
+          <tr>
+            <th data-sort="name" scope="col">Композитор</th>
+            <th data-sort="share" scope="col" class="num">Доля</th>
+            <th data-sort="count" scope="col" class="num">Количество</th>
+            <th data-sort="delta" scope="col" class="num">Δ к первому сезону</th>
+            <th scope="col">По сезонам</th>
+            <th scope="col"><span aria-hidden="true"></span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button id="ranking-more" class="more-btn" hidden>Показать ещё 50</button>
+    </div>
+  </section>
+
+  <section id="heatmap">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Репертуар по сезонам</h2>
+        <div id="heatmap-metric-seg" role="group" aria-label="Метрика тепловой карты">
+          <button class="seg-btn" data-metric="share" aria-pressed="true">Доля концертов сезона, %</button>
+          <button class="seg-btn" data-metric="count" aria-pressed="false">Количество</button>
+        </div>
+      </div>
+      <div id="heatmap-plot-wrap"><div id="heatmap-plot" class="plot" role="img"
+           aria-label="Тепловая карта: доля концертов каждого композитора по сезонам"></div></div>
+      <button id="heatmap-more" class="more-btn">Показать ещё</button>
+    </div>
+  </section>
+
+  <section id="halls">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Один композитор — два зала</h2>
+        <select id="hall-cid" aria-label="Композитор для сравнения залов"></select>
+      </div>
+      <p id="hall-summary"></p>
+      <div id="hall-plot" class="plot" role="img"
+           aria-label="Линейный график доли концертов композитора: филармония и консерватория"></div>
+    </div>
+  </section>
+
+  <section id="coverage">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Насколько полны данные</h2>
+      </div>
+      <div id="coverage-plot" class="plot" role="img"
+           aria-label="Столбчатая диаграмма числа охваченных концертов по сезонам и залам"></div>
+      <p class="cov-note method-note">Абсолютные количества концертов по годам зависят от охвата источников:
+        филармония до 2019 года представлена частично (архивные копии Wayback Machine), весной 2020 года
+        концерты отменялись из-за пандемии, а сезон 2026/27 ещё продолжается. Для сравнения сезонов
+        используйте долю концертов, а не абсолютные числа.</p>
+    </div>
+  </section>
+</main>
+
+<div id="drawer-bg" hidden></div>
+<aside id="drawer" role="dialog" aria-modal="true" aria-label="Карточка композитора">
+  <button data-close aria-label="Закрыть карточку">✕</button>
+  <div id="drawer-body"></div>
+</aside>
+
+<dialog id="about" aria-label="О проекте">
+  <h2>О проекте</h2>
+  <p class="method-note">Для сравнения сезонов основной показатель — доля концертов, а не абсолютное
+    количество. Охват источников различается по годам; данные Московской филармонии до 2019 года
+    частично восстановлены через Wayback Machine.</p>
+  <p class="method-note">Данные собраны из афиш Московской филармонии (meloman.ru) и Московской
+    консерватории (mosconsv.ru) за сезоны 2016/17—2026/27. Один концерт — одна строка; доля считается
+    по концертам, а не по произведениям. Имена композиторов и даты их жизни распознаются автоматически,
+    часть программ остаётся нераспознанной.</p>
+  <button class="more-btn" data-close>Закрыть</button>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<noscript><p class="noscript">Для интерактивных графиков нужен JavaScript и интернет (Plotly CDN).</p></noscript>
+
 <script>
 window.DATASET = __DATA__;</script>
 <script>
 window.AGGREGATES = __AGGREGATES__;</script>
 <script>__APP__</script>
-<script>
-(function () {
-  var D = window.DATASET;
-  var selected = [];
-  var seasons = Array.from(new Set(D.concerts.map(function (c) { return c.season; }))).sort();
-  var seasonSel = document.getElementById('f-season');
-  seasons.forEach(function (s) {
-    var o = document.createElement('option'); o.value = s; o.textContent = s; seasonSel.appendChild(o);
-  });
-  document.getElementById('q').textContent = D.quality.without_composers_pct;
-
-  function filtered() {
-    return D.concerts.filter(function (c) {
-      if (document.getElementById('f-venue').value !== 'all' && c.source !== document.getElementById('f-venue').value) return false;
-      var s = seasonSel.value;
-      if (s !== 'all' && c.season !== s) return false;
-      return true;
-    });
-  }
-
-  function nameOf(cid) {
-    var c = D.composers[cid]; return c ? c.name : cid;
-  }
-
-  function anniversaryYears(cid) {
-    var c = D.composers[cid] || {}; var ys = [];
-    [c.born, c.died].forEach(function (y) {
-      if (!y) return;
-      [50, 100, 125, 150, 175, 200, 250].forEach(function (k) {
-        var a = y + k;
-        if (a >= 2016 && a <= 2026) ys.push({ year: a, kind: (y === c.born ? 'рождение ' : 'смерть ') + y + '+' + k });
-      });
-    });
-    return ys;
-  }
-
-  function drawTop() {
-    var rows = filtered(); var counts = {};
-    rows.forEach(function (c) { c.composers.forEach(function (cid) { counts[cid] = (counts[cid] || 0) + 1; }); });
-    var pairs = Object.keys(counts).map(function (cid) { return [cid, counts[cid]]; })
-      .filter(function (p) { return selected.length === 0 || selected.indexOf(p[0]) >= 0; })
-      .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 25);
-    var q = document.getElementById('f-search').value.trim().toLowerCase();
-    if (q) pairs = pairs.filter(function (p) { return nameOf(p[0]).toLowerCase().indexOf(q) >= 0; });
-    var data = [{ type: 'bar', orientation: 'h', x: pairs.map(function (p) { return p[1]; }),
-      y: pairs.map(function (p) { return nameOf(p[0]); }) }];
-    Plotly.newPlot('top', data, { margin: { l: 180, r: 20, t: 10, b: 30 }, height: 480 }, { displayModeBar: false });
-  }
-
-  function drawHeatmap() {
-    var rows = filtered(); var per = {}; var total = {};
-    rows.forEach(function (c) {
-      total[c.season] = (total[c.season] || 0) + 1;
-      c.composers.forEach(function (cid) {
-        per[cid] = per[cid] || {}; per[cid][c.season] = (per[cid][c.season] || 0) + 1;
-      });
-    });
-    var top = Object.keys(per).map(function (cid) {
-      var n = 0; seasons.forEach(function (s) { n += per[cid][s] || 0; }); return [cid, n];
-    }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 40).map(function (p) { return p[0]; });
-    var z = top.map(function (cid) { return seasons.map(function (s) { return (per[cid] && per[cid][s]) || 0; }); });
-    Plotly.newPlot('heatmap', [{ type: 'heatmap', z: z, x: seasons,
-      y: top.map(nameOf), colorscale: 'Viridis' }],
-      { margin: { l: 180, r: 20, t: 10, b: 40 }, height: 640 }, { displayModeBar: false });
-  }
-
-  function drawTrend() {
-    var list = selected.length ? selected : ['shostakovich', 'tchaikovsky', 'rachmaninoff', 'beethoven', 'mozart']
-      .filter(function (cid) { return D.composers[cid]; });
-    var venue = document.getElementById('f-venue').value;
-    var traces = [];
-    list.forEach(function (cid) {
-      var shares = seasons.map(function (s) {
-        var n = 0, t = 0;
-        D.concerts.forEach(function (c) {
-          if (c.season !== s) return;
-          if (venue === 'all' || c.source === venue) {
-            t++; if (c.composers.indexOf(cid) >= 0) n++;
-          }
-        });
-        return t ? 100 * n / t : null;
-      });
-      traces.push({ type: 'scatter', mode: 'lines+markers', name: nameOf(cid), x: seasons, y: shares });
-    });
-    var shapes = [];
-    list.forEach(function (cid) {
-      anniversaryYears(cid).forEach(function (a) {
-        var idx = seasons.findIndex(function (s) { return s.slice(0, 4) === String(a.year); });
-        if (idx >= 0) shapes.push({ type: 'line', x0: idx, x1: idx, y0: 0, y1: 1, yref: 'paper',
-          line: { dash: 'dot', width: 1 } });
-      });
-    });
-    Plotly.newPlot('trendplot', traces,
-      { margin: { l: 50, r: 20, t: 10, b: 40 }, height: 420, yaxis: { title: '% концертов сезона' }, shapes: shapes },
-      { displayModeBar: false });
-  }
-
-  function drawCoverage() {
-    var rows = D.coverage.by_year;
-    Plotly.newPlot('coverage', [
-      { type: 'bar', name: 'филармония', x: rows.map(function (r) { return r.year; }),
-        y: rows.map(function (r) { return r.meloman; }) },
-      { type: 'bar', name: 'консерватория', x: rows.map(function (r) { return r.year; }),
-        y: rows.map(function (r) { return r.mosconsv; }) }
-    ], { barmode: 'stack', margin: { l: 50, r: 20, t: 10, b: 30 }, height: 240 }, { displayModeBar: false });
-  }
-
-  function redraw() { drawTop(); drawHeatmap(); drawTrend(); drawCoverage(); }
-  ['f-venue', 'f-season'].forEach(function (id) {
-    document.getElementById(id).addEventListener('change', redraw);
-  });
-  document.getElementById('f-search').addEventListener('input', drawTop);
-  document.getElementById('clear').addEventListener('click', function () { selected = []; redraw(); });
-  document.getElementById('trend').addEventListener('dblclick', function () { selected = []; redraw(); });
-
-  // click a top bar toggles composer into trend selection
-  document.getElementById('top').on('plotly_click', function (ev) {
-    var name = ev.points[0].y;
-    var cid = Object.keys(D.composers).find(function (k) { return D.composers[k].name === name; });
-    if (!cid) return;
-    var i = selected.indexOf(cid);
-    if (i >= 0) selected.splice(i, 1); else selected.push(cid);
-    drawTrend();
-  });
-  redraw();
-})();
-</script>
 </body>
 </html>
