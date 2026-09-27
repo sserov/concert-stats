@@ -21,15 +21,15 @@ AND pytest/ruff/build pass AND aggregates match raw dataset numbers.
 
 ## Stage 2 — Implementation (plan Tasks 1–10)
 
-- [ ] Task 1: Aggregates in Python (`aggregates.py`)
-- [ ] Task 2: Build pipeline — app.js inline, slim DATASET, script-safe JSON
-- [ ] Task 3: Pure selectors + node tests
-- [ ] Task 4: Template shell — design tokens, layout, header, controls, sections
-- [ ] Task 5: State, controls, KPI, autocomplete
-- [ ] Task 6: renderTrend — main chart
-- [ ] Task 7: renderRanking — table
-- [ ] Task 8: renderHeatmap
-- [ ] Task 9: Hall comparison + composer drawer
+- [x] Task 1: Aggregates in Python (`aggregates.py`)
+- [x] Task 2: Build pipeline — app.js inline, slim DATASET, script-safe JSON
+- [x] Task 3: Pure selectors + node tests
+- [x] Task 4: Template shell — design tokens, layout, header, controls, sections
+- [x] Task 5: State, controls, KPI, autocomplete
+- [x] Task 6: renderTrend — main chart
+- [x] Task 7: renderRanking — table
+- [x] Task 8: renderHeatmap
+- [x] Task 9: Hall comparison + composer drawer
 - [ ] Task 10: Coverage, About, a11y pass, final build
 
 ## Stage 3 — Visual QA loop

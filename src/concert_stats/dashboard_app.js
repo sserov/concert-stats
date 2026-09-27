@@ -703,10 +703,10 @@ function renderHeatmap() {
     font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 12 },
     margin: { l: 200, r: 20, t: 30, b: 40 },
     xaxis: { tickvals: range, ticktext, side: "top", gridcolor: "#DDD9D0" },
-    yaxis: { automargin: true, ticklen: 3 },
+    yaxis: { automargin: true, ticklen: 3, autorange: "reversed" },
   };
   layout.annotations = range.includes(AGG.current_season) ? [{
-    xref: "x", x: AGG.current_season, yref: "paper", y: 0,
+    xref: "x", x: AGG.current_season, yref: "paper", y: -0.06,
     text: "неполный сезон", showarrow: false,
     font: { color: "#77736B", size: 10 }, xanchor: "left",
   }] : [];
@@ -854,6 +854,39 @@ function bindHallAndDrawer() {
   });
 }
 
+/* ---------- renderCoverage: how complete the data is ---------- */
+
+function renderCoverage() {
+  const rows = getCoverage(AGG);
+  if (!rows.length) return;
+  const seasons = rows.map((r) => r.season);
+  const layout = {
+    barmode: "stack",
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 12 },
+    margin: { l: 64, r: 24, t: 30, b: 40 }, showlegend: true,
+    legend: { orientation: "h", y: -0.2 },
+    xaxis: { gridcolor: "#DDD9D0" },
+    yaxis: { title: { text: "концертов в данных" }, gridcolor: "#DDD9D0" },
+    annotations: [
+      { x: "2017/18", yref: "paper", y: 1, text: "частичный охват (Wayback)", showarrow: false,
+        font: { color: "#77736B", size: 11 }, yshift: 8 },
+      { x: "2020/21", yref: "paper", y: 1, text: "ковид", showarrow: false,
+        font: { color: "#77736B", size: 11 }, yshift: 8 },
+      { x: AGG.current_season, yref: "paper", y: 1, text: "текущий, неполный", showarrow: false,
+        font: { color: "#77736B", size: 11 }, yshift: 8 },
+    ],
+  };
+  const bar = (name, color, key) => ({
+    type: "bar", name, x: seasons, y: rows.map((r) => r[key]),
+    marker: { color, line: { width: 1, color: "#F7F5F0" } },
+    hovertemplate: `Сезон %{x}<br>${name}: %{y}<extra></extra>`,
+  });
+  Plotly.newPlot($id("coverage-plot"),
+    [bar("Филармония", "#8C2635", "meloman"), bar("Консерватория", "#536B63", "mosconsv")],
+    layout, { displayModeBar: false, responsive: true });
+}
+
 /* ---------- node:test exports (no DOM at module scope) ---------- */
 
 if (typeof module !== "undefined" && module.exports) {
@@ -874,9 +907,14 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
 }
 /* Script tag sits at the end of <body>: DOM exists, safe to register renders. */
 if (typeof document !== "undefined" && typeof window !== "undefined") {
-  RENDERERS.push(renderTrend, renderRanking, renderHeatmap, renderHallComparison);
+  RENDERERS.push(renderTrend, renderRanking, renderHeatmap, renderHallComparison, renderCoverage);
   bindRanking();
   bindHeatmap();
   bindHallAndDrawer();
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderAll, 150);
+  });
   window.addEventListener("load", init);
 }

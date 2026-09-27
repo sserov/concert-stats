@@ -1,5 +1,9 @@
 """Tests for AGGREGATES precomputation."""
 
+from pathlib import Path
+
+import pytest
+
 from concert_stats.aggregates import compute_aggregates
 
 
@@ -105,3 +109,21 @@ def test_identified_coverage_semantics():
     agg = compute_aggregates(_ds())
     st = agg["season_totals"]["2016/17"]
     assert st["with_text"] == 2 and st["with_composers"] == 2
+
+
+@pytest.mark.skipif(not Path("data/dataset.json").exists(), reason="real dataset not present")
+def test_aggregates_match_raw_dataset():
+    """AGGREGATES must reproduce base numbers from raw dataset (Stage 4 gate)."""
+    import json
+    from collections import Counter
+
+    ds = json.loads(Path("data/dataset.json").read_text(encoding="utf-8"))
+    agg = compute_aggregates(ds)
+    assert sum(st["total"] for st in agg["season_totals"].values()) == len(ds["concerts"])
+    raw_top = Counter(cid for c in ds["concerts"] for cid in c["composers"]).most_common(5)
+    for cid, n in raw_top:
+        assert agg["composer_totals"][cid]["total"] == n
+    for row in agg["coverage_by_season"]:
+        st = agg["season_totals"][row["season"]]
+        assert row["meloman"] == st["meloman"]["total"]
+        assert row["mosconsv"] == st["mosconsv"]["total"]

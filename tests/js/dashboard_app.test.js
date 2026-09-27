@@ -177,3 +177,14 @@ test("heatmap keeps top-15 plus forced selected out of 20 composers", () => {
   assert.ok(h.rows.map((r) => r.cid).includes("c17"));
   assert.deepStrictEqual(h.forced, ["c17"]);
 });
+
+test("getHallComparison uses per-hall denominators", () => {
+  const hc = S.getHallComparison(AGG, baseState, "bach", meta);
+  assert.deepStrictEqual(hc.seasons, ["2016/17", "2017/18", "2026/27"]);
+  assert.ok(Math.abs(hc.phil[0] - 100 * 1 / 6) < 1e-9);
+  assert.ok(Math.abs(hc.cons[0] - 100 * 2 / 4) < 1e-9);
+  assert.strictEqual(hc.philTotal, 7);
+  assert.strictEqual(hc.consTotal, 5);
+  assert.ok(Math.abs(hc.philShare - 100 * 7 / 21) < 1e-9);
+  assert.ok(Math.abs(hc.consShare - 100 * 5 / 14) < 1e-9);
+});
