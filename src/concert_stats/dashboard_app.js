@@ -631,6 +631,8 @@ function _trendLayout(vm) {
   return layout;
 }
 
+/* ---------- renderTrend: the dominant chart ---------- */
+
 function renderTrend() {
   const vm = trendViewModel(AGG, state, META);
   const div = $id("trend-plot");
@@ -644,8 +646,8 @@ function renderTrend() {
     .join(", ");
   $id("trend-summary").textContent =
     `В выборке ${_fmtRu(total)} концертов; лидеры диапазона: ${top}`;
-  const cfg = { displayModeBar: false, responsive: true };
-  Plotly.newPlot(div, _trendTraces(vm), _trendLayout(vm), cfg).then(() => {
+  Plotly.newPlot(div, _trendTraces(vm), _trendLayout(vm),
+    { displayModeBar: false, responsive: true }).then(() => {
     if (!div._clickBound) {
       div._clickBound = true;
       div.on("plotly_click", (ev) => {
@@ -653,6 +655,81 @@ function renderTrend() {
         if (cid && typeof openComposerDrawer === "function") openComposerDrawer(cid);
       });
     }
+  });
+}
+
+/* ---------- renderHeatmap: repertoire by season ---------- */
+
+const HEAT_SCALE = [[0, "#F7F5F0"], [0.5, "#D9A69B"], [1, "#8C2635"]];
+
+function _heatCells(hm) {
+  const range = seasonsInRange(AGG, state);
+  const incomplete = "Сезон продолжается; данные неполные";
+  return {
+    type: "heatmap",
+    z: hm.rows.map((r) => r.values),
+    x: range,
+    y: hm.rows.map((r) => (state.selected.includes(r.cid) ? `° ${r.name}` : r.name)),
+    zmin: 0,
+    hovertemplate:
+      "Сезон %{x}<br>%{y}<br>" +
+      (state.metric === "share" ? "%{z:.1f}%" : "%{z} концертов") +
+      "%{customdata}<extra></extra>",
+    customdata: hm.rows.map(() => range.map((s) =>
+      (s === AGG.current_season ? `<br>${incomplete}` : ""))),
+    colorscale: HEAT_SCALE,
+    colorbar: {
+      title: { text: state.metric === "share" ? "Доля, %" : "Концертов", side: "top" },
+      tickfont: { size: 11 },
+    },
+    xgap: 2,
+    ygap: 2,
+  };
+}
+
+function renderHeatmap() {
+  const hm = getHeatmapData(AGG, state, state.heatmapExtra, META);
+  const range = seasonsInRange(AGG, state);
+  const ticktext = range.map((s) => (s === AGG.current_season ? `${s} (тек.)` : s));
+  const layout = {
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 12 },
+    margin: { l: 200, r: 20, t: 30, b: 40 },
+    xaxis: { tickvals: range, ticktext, side: "top", gridcolor: "#DDD9D0" },
+    yaxis: { automargin: true, ticklen: 3 },
+  };
+  layout.annotations = range.includes(AGG.current_season) ? [{
+    xref: "x", x: AGG.current_season, yref: "paper", y: 0,
+    text: "неполный сезон", showarrow: false,
+    font: { color: "#77736B", size: 10 }, xanchor: "left",
+  }] : [];
+  const div = $id("heatmap-plot");
+  Plotly.newPlot(div, [_heatCells(hm)], layout,
+    { displayModeBar: false, responsive: true }).then(() => {
+    if (!div._clickBound) {
+      div._clickBound = true;
+      div.on("plotly_click", (ev) => {
+        const row = hm.rows[ev.points[0].pointIndex];
+        const cid = row ? row.cid : null;
+        if (cid && typeof openComposerDrawer === "function") openComposerDrawer(cid);
+      });
+    }
+  });
+}
+
+function bindHeatmap() {
+  $id("heatmap-metric-seg").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-metric]");
+    if (!btn) return;
+    state.heatmapMetric = btn.dataset.metric;
+    $id("heatmap-metric-seg").querySelectorAll(".seg-btn").forEach((b) =>
+      b.setAttribute("aria-pressed", String(b === btn)));
+    renderHeatmap();
+  });
+  $id("heatmap-more").addEventListener("click", () => {
+    state.heatmapExtra += 15;
+    renderHeatmap();
   });
 }
 
@@ -676,7 +753,8 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
 }
 /* Script tag sits at the end of <body>: DOM exists, safe to register renders. */
 if (typeof document !== "undefined" && typeof window !== "undefined") {
-  RENDERERS.push(renderTrend, renderRanking);
+  RENDERERS.push(renderTrend, renderRanking, renderHeatmap);
   bindRanking();
+  bindHeatmap();
   window.addEventListener("load", init);
 }

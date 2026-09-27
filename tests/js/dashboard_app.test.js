@@ -140,3 +140,40 @@ test("fmtDelta formats russian percentage points", () => {
   assert.strictEqual(S.fmtDelta(-2.05), "−2,1 п.п.");
   assert.strictEqual(S.fmtDelta(null), "—");
 });
+
+test("heatmap keeps top-15 plus forced selected out of 20 composers", () => {
+  const seasons = ["2016/17", "2017/18"];
+  const names = {};
+  const totals = {};
+  const bySeason = {};
+  const totalBySeason = { "2016/17": 100, "2017/18": 100 };
+  for (let i = 0; i < 20; i++) {
+    const cid = `c${i}`;
+    names[cid] = { name: `Композитор ${i}`, born: null, died: null };
+    bySeason[cid] = { "2016/17": 20 - i, "2017/18": 20 - i };
+    totals[cid] = { total: 2 * (20 - i), meloman: 20 - i, mosconsv: 20 - i };
+  }
+  const big = {
+    seasons,
+    current_season: null,
+    season_totals: {
+      "2016/17": { total: 100, with_text: 90, with_composers: 80,
+        meloman: { total: 50, with_text: 45, with_composers: 40 },
+        mosconsv: { total: 50, with_text: 45, with_composers: 40 } },
+      "2017/18": { total: 100, with_text: 90, with_composers: 80,
+        meloman: { total: 50, with_text: 45, with_composers: 40 },
+        mosconsv: { total: 50, with_text: 45, with_composers: 40 } },
+    },
+    composer_totals: totals,
+    composer_by_season: bySeason,
+    composer_by_season_by_hall: {},
+    coverage_by_season: [],
+    jubilees: [],
+  };
+  void totalBySeason;
+  const st = { ...baseState, seasonFrom: "2016/17", seasonTo: "2017/18", selected: ["c17"] };
+  const h = S.getHeatmapData(big, st, 15, { composers: names });
+  assert.strictEqual(h.rows.length, 16);
+  assert.ok(h.rows.map((r) => r.cid).includes("c17"));
+  assert.deepStrictEqual(h.forced, ["c17"]);
+});
