@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=1440">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Музыкальный репертуар Москвы — сезоны 2016/17—2026/27</title>
 <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
 <style>
@@ -18,7 +18,7 @@
     --sans: -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
   body {
     margin: 0;
     background: var(--bg);
@@ -206,6 +206,84 @@
     .wrap { padding: 24px 28px; }
     #about-open { right: 28px; }
     #kpi .wrap { gap: 36px; }
+  }
+
+  /* ---------- tablet ---------- */
+  @media (max-width: 900px) {
+    .wrap { padding: 24px 20px; }
+    #kpi .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 32px; }
+    .controls { position: static; }
+    #about-open { position: static; display: inline-block; margin-top: 8px; }
+  }
+
+  /* ---------- phone ---------- */
+  @media (max-width: 600px) {
+    .wrap { padding: 16px; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 22px; }
+    .desc { font-size: 16px; max-width: none; }
+    .sub { font-size: 14px; }
+    .site-head { padding-top: 4px; }
+    #about-open { margin-bottom: 8px; }
+    .controls .wrap { flex-direction: column; align-items: stretch; gap: 10px; }
+    #hall-seg { display: flex; width: 100%; }
+    .seg-btn { flex: 1; padding: 8px 6px; }
+    .ctl-label { display: flex; align-items: center; gap: 6px; }
+    .ctl-label select { flex: 1; min-width: 0; }
+    .search { width: 100%; }
+    #composer-search { width: 100%; }
+    #chips { width: 100%; }
+    #kpi .wrap { grid-template-columns: 1fr 1fr; gap: 16px 12px; padding-top: 20px; }
+    .kpi-item .kpi-num { font-size: 26px; }
+    section { margin-top: 28px; }
+    .sec-head { gap: 12px; margin-bottom: 12px; }
+    #trend-plot { height: 440px; }
+    #hall-plot, #coverage-plot { height: 300px; }
+    #ranking-search { width: 100%; }
+
+    /* ranking table → two-line cards */
+    #ranking-table thead { display: none; }
+    #ranking-table tbody tr {
+      display: flex; flex-wrap: wrap; align-items: baseline;
+      column-gap: 12px; row-gap: 2px; padding: 10px 0;
+      border-bottom: 1px solid var(--grid);
+    }
+    #ranking-table tbody td { border-bottom: none; padding: 0; }
+    #ranking-table tbody td:first-child {
+      flex: 1 1 auto; min-width: 0; font-size: 15px; padding-right: 12px;
+    }
+    #ranking-table tbody td:nth-child(2) { flex: 0 0 auto; font-size: 18px; font-weight: 600; }
+    #ranking-table tbody td:nth-child(3),
+    #ranking-table tbody td:nth-child(4) { flex: none; font-size: 13px; color: var(--muted); text-align: left; }
+    #ranking-table tbody td:nth-child(6) { flex: none; order: 2; }
+    #ranking-table tbody td:nth-child(5) { flex: 0 0 auto; order: 3; margin-left: auto; align-self: center; }
+    #ranking-table button[data-details] {
+      background: none; border: none; color: var(--muted); font: inherit;
+      font-size: 13px; text-decoration: underline; cursor: pointer; min-height: 40px;
+    }
+    tr.sel td:first-child { box-shadow: none; border-left: 3px solid var(--row-color, var(--phil)); }
+
+    /* heatmap scrolls horizontally */
+    #heatmap-plot-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #heatmap-plot { min-width: 760px; }
+
+    /* drawer → bottom sheet */
+    #drawer {
+      top: auto; left: 0; right: 0; bottom: 0; width: auto; max-width: none;
+      max-height: 88vh; border-left: none; border-top: 1px solid var(--grid);
+      border-radius: 8px 8px 0 0; padding: 16px 16px 24px;
+      transform: translateY(100%);
+    }
+    #drawer.open { transform: translateY(0); }
+
+    dialog {
+      width: calc(100vw - 32px); max-width: 640px; max-height: 85vh;
+      overflow-y: auto; margin: auto; padding: 24px 20px;
+    }
+    #toast {
+      left: 16px; right: 16px; bottom: 16px; width: auto;
+      transform: none; text-align: center;
+    }
   }
 </style>
 </head>
@@ -416,6 +494,29 @@ function _fmtRu(x, digits) {
   return x.toLocaleString("ru-RU", {
     minimumFractionDigits: digits || 0, maximumFractionDigits: digits || 0,
   });
+}
+
+/* ---------- mobile layout helpers (pure) ---------- */
+
+/* Layout breakpoint shared with the CSS media queries in the template. */
+const MOBILE_MAX_WIDTH = 600;
+
+function isMobileWidth(w) {
+  return w <= MOBILE_MAX_WIDTH;
+}
+
+/* Every Nth tick, always keeping the last x value (current season label). */
+function tickValsEvery(x, step) {
+  if (step <= 1) return x.slice();
+  const out = x.filter((_, i) => i % step === 0);
+  if (out[out.length - 1] !== x[x.length - 1]) out.push(x[x.length - 1]);
+  return out;
+}
+
+/* "50 лет со дня смерти" → "50 лет": short jubilee tag for narrow charts. */
+function compactJubilee(label) {
+  const m = /^(\d+\s+\S+)/.exec(label);
+  return m ? m[1] : label;
 }
 
 /* ---------- selectors (pure, no DOM/Plotly) ---------- */
@@ -981,6 +1082,7 @@ function _trendTraces(vm) {
 
 function _trendLayout(vm) {
   const isShare = state.metric === "share";
+  const mobile = typeof window !== "undefined" && isMobileWidth(window.innerWidth);
   const ticktext = vm.x.map((s) => seasonTickLabel(s, AGG));
   const layout = {
     paper_bgcolor: "rgba(0,0,0,0)",
@@ -1015,6 +1117,20 @@ function _trendLayout(vm) {
       })),
     ],
   };
+  if (mobile) {
+    layout.font.size = 12;
+    layout.margin = { l: 40, r: 8, t: 12, b: 36 };
+    layout.showlegend = false;
+    layout.xaxis.tickvals = tickValsEvery(vm.x, 2);
+    layout.xaxis.ticktext = layout.xaxis.tickvals.map((s) => seasonTickLabel(s, AGG));
+    layout.xaxis.tickangle = -45;
+    delete layout.yaxis.title;
+    layout.annotations[0].font.size = 10;
+    layout.annotations = layout.annotations.map((a, i) => (i === 0 ? a : {
+      ...a, text: compactJubilee(a.text),
+      font: { color: "#22211F", size: 9 }, ay: -18,
+    }));
+  }
   return layout;
 }
 
@@ -1147,6 +1263,7 @@ function renderHallComparison() {
   if (!cid) return;
   sel.value = cid;
   const hc = getHallComparison(AGG, state, cid, META);
+  const mobile = typeof window !== "undefined" && isMobileWidth(window.innerWidth);
   $id("hall-summary").textContent =
     `Филармония ${_fmtRu(hc.philShare, 1)}% · Консерватория ${_fmtRu(hc.consShare, 1)}%` +
     ` (все концерты композитора: ${_fmtRu(hc.philTotal + hc.consTotal)})`;
@@ -1160,7 +1277,18 @@ function renderHallComparison() {
   });
   Plotly.newPlot($id("hall-plot"),
     [line("Филармония", "#8C2635", hc.phil), line("Консерватория", "#536B63", hc.cons)],
-    {
+    mobile ? {
+      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 12 },
+      margin: { l: 40, r: 8, t: 12, b: 36 }, showlegend: true,
+      legend: { orientation: "h", y: -0.2, font: { size: 11 } },
+      xaxis: {
+        tickvals: tickValsEvery(hc.seasons, 2), tickangle: -45,
+        ticktext: tickValsEvery(hc.seasons, 2).map((s) => seasonTickLabel(s, AGG)),
+        gridcolor: "#DDD9D0",
+      },
+      yaxis: { ticksuffix: "%", gridcolor: "#DDD9D0" },
+    } : {
       paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
       font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 13 },
       margin: { l: 64, r: 24, t: 16, b: 40 }, showlegend: true,
@@ -1254,6 +1382,7 @@ function renderCoverage() {
   const rows = getCoverage(AGG);
   if (!rows.length) return;
   const seasons = rows.map((r) => r.season);
+  const mobile = typeof window !== "undefined" && isMobileWidth(window.innerWidth);
   const layout = {
     barmode: "stack",
     paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
@@ -1271,6 +1400,15 @@ function renderCoverage() {
         font: { color: "#77736B", size: 11 }, yshift: 8 },
     ],
   };
+  if (mobile) {
+    layout.font.size = 11;
+    layout.margin = { l: 48, r: 8, t: 24, b: 36 };
+    delete layout.yaxis.title;
+    layout.legend.font = { size: 11 };
+    for (const a of layout.annotations) a.font.size = 10;
+    /* stagger the first two labels — they collide at narrow width */
+    layout.annotations[1].yshift = 24;
+  }
   const bar = (name, color, key) => ({
     type: "bar", name, x: seasons, y: rows.map((r) => r[key]),
     marker: { color, line: { width: 1, color: "#F7F5F0" } },
@@ -1289,6 +1427,7 @@ if (typeof module !== "undefined" && module.exports) {
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
     seasonTickLabel, effectiveSelection, addSelected, removeSelected,
     trendViewModel, rankingViewModel, fmtDelta, _heatClickRow, selectComposer,
+    isMobileWidth, tickValsEvery, compactJubilee,
   };
 }
 if (typeof document !== "undefined" && typeof window !== "undefined") {
@@ -1297,6 +1436,7 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
     seasonTickLabel, effectiveSelection, addSelected, removeSelected,
     trendViewModel, rankingViewModel, fmtDelta, _heatClickRow, selectComposer,
+    isMobileWidth, tickValsEvery, compactJubilee,
     init,
   };
 }
