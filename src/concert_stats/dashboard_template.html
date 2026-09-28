@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=1440">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Музыкальный репертуар Москвы — сезоны 2016/17—2026/27</title>
 <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
 <style>
@@ -18,7 +18,7 @@
     --sans: -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
   body {
     margin: 0;
     background: var(--bg);
@@ -206,6 +206,84 @@
     .wrap { padding: 24px 28px; }
     #about-open { right: 28px; }
     #kpi .wrap { gap: 36px; }
+  }
+
+  /* ---------- tablet ---------- */
+  @media (max-width: 900px) {
+    .wrap { padding: 24px 20px; }
+    #kpi .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 32px; }
+    .controls { position: static; }
+    #about-open { position: static; display: inline-block; margin-top: 8px; }
+  }
+
+  /* ---------- phone ---------- */
+  @media (max-width: 600px) {
+    .wrap { padding: 16px; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 22px; }
+    .desc { font-size: 16px; max-width: none; }
+    .sub { font-size: 14px; }
+    .site-head { padding-top: 4px; }
+    #about-open { margin-bottom: 8px; }
+    .controls .wrap { flex-direction: column; align-items: stretch; gap: 10px; }
+    #hall-seg { display: flex; width: 100%; }
+    .seg-btn { flex: 1; padding: 8px 6px; }
+    .ctl-label { display: flex; align-items: center; gap: 6px; }
+    .ctl-label select { flex: 1; min-width: 0; }
+    .search { width: 100%; }
+    #composer-search { width: 100%; }
+    #chips { width: 100%; }
+    #kpi .wrap { grid-template-columns: 1fr 1fr; gap: 16px 12px; padding-top: 20px; }
+    .kpi-item .kpi-num { font-size: 26px; }
+    section { margin-top: 28px; }
+    .sec-head { gap: 12px; margin-bottom: 12px; }
+    #trend-plot { height: 440px; }
+    #hall-plot, #coverage-plot { height: 300px; }
+    #ranking-search { width: 100%; }
+
+    /* ranking table → two-line cards */
+    #ranking-table thead { display: none; }
+    #ranking-table tbody tr {
+      display: flex; flex-wrap: wrap; align-items: baseline;
+      column-gap: 12px; row-gap: 2px; padding: 10px 0;
+      border-bottom: 1px solid var(--grid);
+    }
+    #ranking-table tbody td { border-bottom: none; padding: 0; }
+    #ranking-table tbody td:first-child {
+      flex: 1 1 auto; min-width: 0; font-size: 15px; padding-right: 12px;
+    }
+    #ranking-table tbody td:nth-child(2) { flex: 0 0 auto; font-size: 18px; font-weight: 600; }
+    #ranking-table tbody td:nth-child(3),
+    #ranking-table tbody td:nth-child(4) { flex: none; font-size: 13px; color: var(--muted); text-align: left; }
+    #ranking-table tbody td:nth-child(6) { flex: none; order: 2; }
+    #ranking-table tbody td:nth-child(5) { flex: 0 0 auto; order: 3; margin-left: auto; align-self: center; }
+    #ranking-table button[data-details] {
+      background: none; border: none; color: var(--muted); font: inherit;
+      font-size: 13px; text-decoration: underline; cursor: pointer; min-height: 40px;
+    }
+    tr.sel td:first-child { box-shadow: none; border-left: 3px solid var(--row-color, var(--phil)); }
+
+    /* heatmap scrolls horizontally */
+    #heatmap-plot-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #heatmap-plot { min-width: 760px; }
+
+    /* drawer → bottom sheet */
+    #drawer {
+      top: auto; left: 0; right: 0; bottom: 0; width: auto; max-width: none;
+      max-height: 88vh; border-left: none; border-top: 1px solid var(--grid);
+      border-radius: 8px 8px 0 0; padding: 16px 16px 24px;
+      transform: translateY(100%);
+    }
+    #drawer.open { transform: translateY(0); }
+
+    dialog {
+      width: calc(100vw - 32px); max-width: 640px; max-height: 85vh;
+      overflow-y: auto; margin: auto; padding: 24px 20px;
+    }
+    #toast {
+      left: 16px; right: 16px; bottom: 16px; width: auto;
+      transform: none; text-align: center;
+    }
   }
 </style>
 </head>

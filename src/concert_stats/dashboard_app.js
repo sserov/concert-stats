@@ -55,6 +55,29 @@ function _fmtRu(x, digits) {
   });
 }
 
+/* ---------- mobile layout helpers (pure) ---------- */
+
+/* Layout breakpoint shared with the CSS media queries in the template. */
+const MOBILE_MAX_WIDTH = 600;
+
+function isMobileWidth(w) {
+  return w <= MOBILE_MAX_WIDTH;
+}
+
+/* Every Nth tick, always keeping the last x value (current season label). */
+function tickValsEvery(x, step) {
+  if (step <= 1) return x.slice();
+  const out = x.filter((_, i) => i % step === 0);
+  if (out[out.length - 1] !== x[x.length - 1]) out.push(x[x.length - 1]);
+  return out;
+}
+
+/* "50 лет со дня смерти" → "50 лет": short jubilee tag for narrow charts. */
+function compactJubilee(label) {
+  const m = /^(\d+\s+\S+)/.exec(label);
+  return m ? m[1] : label;
+}
+
 /* ---------- selectors (pure, no DOM/Plotly) ---------- */
 
 function seasonsInRange(AGG, state) {
@@ -618,6 +641,7 @@ function _trendTraces(vm) {
 
 function _trendLayout(vm) {
   const isShare = state.metric === "share";
+  const mobile = typeof window !== "undefined" && isMobileWidth(window.innerWidth);
   const ticktext = vm.x.map((s) => seasonTickLabel(s, AGG));
   const layout = {
     paper_bgcolor: "rgba(0,0,0,0)",
@@ -652,6 +676,20 @@ function _trendLayout(vm) {
       })),
     ],
   };
+  if (mobile) {
+    layout.font.size = 12;
+    layout.margin = { l: 40, r: 8, t: 12, b: 36 };
+    layout.showlegend = false;
+    layout.xaxis.tickvals = tickValsEvery(vm.x, 2);
+    layout.xaxis.ticktext = layout.xaxis.tickvals.map((s) => seasonTickLabel(s, AGG));
+    layout.xaxis.tickangle = -45;
+    delete layout.yaxis.title;
+    layout.annotations[0].font.size = 10;
+    layout.annotations = layout.annotations.map((a, i) => (i === 0 ? a : {
+      ...a, text: compactJubilee(a.text),
+      font: { color: "#22211F", size: 9 }, ay: -18,
+    }));
+  }
   return layout;
 }
 
@@ -784,6 +822,7 @@ function renderHallComparison() {
   if (!cid) return;
   sel.value = cid;
   const hc = getHallComparison(AGG, state, cid, META);
+  const mobile = typeof window !== "undefined" && isMobileWidth(window.innerWidth);
   $id("hall-summary").textContent =
     `Филармония ${_fmtRu(hc.philShare, 1)}% · Консерватория ${_fmtRu(hc.consShare, 1)}%` +
     ` (все концерты композитора: ${_fmtRu(hc.philTotal + hc.consTotal)})`;
@@ -797,7 +836,18 @@ function renderHallComparison() {
   });
   Plotly.newPlot($id("hall-plot"),
     [line("Филармония", "#8C2635", hc.phil), line("Консерватория", "#536B63", hc.cons)],
-    {
+    mobile ? {
+      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 12 },
+      margin: { l: 40, r: 8, t: 12, b: 36 }, showlegend: true,
+      legend: { orientation: "h", y: -0.2, font: { size: 11 } },
+      xaxis: {
+        tickvals: tickValsEvery(hc.seasons, 2), tickangle: -45,
+        ticktext: tickValsEvery(hc.seasons, 2).map((s) => seasonTickLabel(s, AGG)),
+        gridcolor: "#DDD9D0",
+      },
+      yaxis: { ticksuffix: "%", gridcolor: "#DDD9D0" },
+    } : {
       paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
       font: { family: "-apple-system, 'Segoe UI', Roboto, sans-serif", color: "#22211F", size: 13 },
       margin: { l: 64, r: 24, t: 16, b: 40 }, showlegend: true,
@@ -891,6 +941,7 @@ function renderCoverage() {
   const rows = getCoverage(AGG);
   if (!rows.length) return;
   const seasons = rows.map((r) => r.season);
+  const mobile = typeof window !== "undefined" && isMobileWidth(window.innerWidth);
   const layout = {
     barmode: "stack",
     paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
@@ -908,6 +959,15 @@ function renderCoverage() {
         font: { color: "#77736B", size: 11 }, yshift: 8 },
     ],
   };
+  if (mobile) {
+    layout.font.size = 11;
+    layout.margin = { l: 48, r: 8, t: 24, b: 36 };
+    delete layout.yaxis.title;
+    layout.legend.font = { size: 11 };
+    for (const a of layout.annotations) a.font.size = 10;
+    /* stagger the first two labels — they collide at narrow width */
+    layout.annotations[1].yshift = 24;
+  }
   const bar = (name, color, key) => ({
     type: "bar", name, x: seasons, y: rows.map((r) => r[key]),
     marker: { color, line: { width: 1, color: "#F7F5F0" } },
@@ -926,6 +986,7 @@ if (typeof module !== "undefined" && module.exports) {
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
     seasonTickLabel, effectiveSelection, addSelected, removeSelected,
     trendViewModel, rankingViewModel, fmtDelta, _heatClickRow, selectComposer,
+    isMobileWidth, tickValsEvery, compactJubilee,
   };
 }
 if (typeof document !== "undefined" && typeof window !== "undefined") {
@@ -934,6 +995,7 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
     getHeatmapData, getHallComparison, getCoverage, jubileeMap,
     seasonTickLabel, effectiveSelection, addSelected, removeSelected,
     trendViewModel, rankingViewModel, fmtDelta, _heatClickRow, selectComposer,
+    isMobileWidth, tickValsEvery, compactJubilee,
     init,
   };
 }
