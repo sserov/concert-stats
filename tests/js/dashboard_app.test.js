@@ -232,3 +232,28 @@ test("seasonTickLabel marks the current season", () => {
   assert.strictEqual(S.seasonTickLabel("2026/27", AGG), "2026/27 (тек.)");
   assert.strictEqual(S.seasonTickLabel("2016/17", AGG), "2016/17");
 });
+
+/* ---------- mobile helpers ---------- */
+
+test("isMobileWidth: phone widths mobile, tablet/desktop not", () => {
+  assert.strictEqual(S.isMobileWidth(375), true);
+  assert.strictEqual(S.isMobileWidth(600), true);
+  assert.strictEqual(S.isMobileWidth(601), false);
+  assert.strictEqual(S.isMobileWidth(768), false);
+  assert.strictEqual(S.isMobileWidth(1440), false);
+});
+
+test("tickValsEvery steps but always keeps the last season", () => {
+  const x = ["2016/17", "2017/18", "2018/19", "2019/20", "2020/21", "2021/22"];
+  assert.deepStrictEqual(S.tickValsEvery(x, 2),
+    ["2016/17", "2018/19", "2020/21", "2021/22"]);
+  assert.deepStrictEqual(S.tickValsEvery(x, 1), x);
+  const odd = ["a", "b", "c"];
+  assert.deepStrictEqual(S.tickValsEvery(odd, 2), ["a", "c"]);
+});
+
+test("compactJubilee keeps number and unit, drops the tail", () => {
+  assert.strictEqual(S.compactJubilee("50 лет со дня смерти"), "50 лет");
+  assert.strictEqual(S.compactJubilee("125 лет со дня рождения"), "125 лет");
+  assert.strictEqual(S.compactJubilee("К юбилею"), "К юбилею");
+});
